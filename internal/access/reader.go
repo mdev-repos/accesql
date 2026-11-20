@@ -19,8 +19,23 @@ type DB struct {
 	sqlDB *sql.DB
 }
 
-// Row es una fila: nombre de columna -> valor.
+// Row es una fila lista para JSON: nombre de columna -> valor.
 type Row map[string]any
+
+// Column describe una columna: su nombre y el tipo según Access
+// ("Text", "Long Integer", "Numeric", "DateTime", ...).
+type Column struct {
+	Name string
+	Type string
+}
+
+// Table es una tabla leída tal cual: esquema y valores crudos, sin adaptar a
+// ningún formato de salida. Rows[i][j] corresponde a Columns[j].
+type Table struct {
+	Name    string
+	Columns []Column
+	Rows    [][]any
+}
 
 // Open abre el archivo Access indicado.
 func Open(path string) (*DB, error) {
@@ -58,66 +73,76 @@ func (d *DB) Tables() ([]string, error) {
 	return names, rows.Err()
 }
 
-// ReadTable devuelve todas las filas de una tabla.
-func (d *DB) ReadTable(table string) ([]Row, error) {
+// Load lee una tabla completa: columnas con su tipo y valores crudos.
+func (d *DB) Load(table string) (*Table, error) {
 	rows, err := d.sqlDB.Query("SELECT * FROM [" + table + "]")
 	if err != nil {
 		return nil, fmt.Errorf("consultando tabla %q: %w", table, err)
 	}
 	defer rows.Close()
 
-	cols, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-
-	// Tipos según Access ("Numeric", "Text", ...). Los consultamos una vez por
-	// tabla, no por fila. Las columnas Numeric llegan como string del driver;
-	// las marcamos para emitirlas como número JSON.
 	colTypes, err := rows.ColumnTypes()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("tabla %q: %w", table, err)
 	}
-	isNumeric := make([]bool, len(cols))
+	t := &Table{Name: table, Columns: make([]Column, len(colTypes)), Rows: [][]any{}}
 	for i, ct := range colTypes {
-		isNumeric[i] = ct.DatabaseTypeName() == "Numeric"
+		t.Columns[i] = Column{Name: ct.Name(), Type: ct.DatabaseTypeName()}
 	}
 
-	result := []Row{} // slice vacío (no nil) para que JSON salga [] y no null
 	for rows.Next() {
 		// Scan necesita punteros: armamos un slice de valores y otro de
 		// punteros a cada posición.
-		values := make([]any, len(cols))
-		ptrs := make([]any, len(cols))
+		values := make([]any, len(t.Columns))
+		ptrs := make([]any, len(t.Columns))
 		for i := range values {
 			ptrs[i] = &values[i]
 		}
 		if err := rows.Scan(ptrs...); err != nil {
 			return nil, fmt.Errorf("tabla %q: %w", table, err)
 		}
-		row := make(Row, len(cols))
-		for i, c := range cols {
-			row[c] = normalize(values[i])
-			// json.Number se escribe sin comillas y conserva los decimales
-			// exactos (no pasa por float64).
-			if s, ok := values[i].(string); ok && isNumeric[i] {
-				row[c] = json.Number(s)
-			}
+		t.Rows = append(t.Rows, values)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("tabla %q: %w", table, err)
+	}
+	return t, nil
+}
+
+// ReadTable devuelve todas las filas de una tabla, adaptadas para JSON.
+func (d *DB) ReadTable(table string) ([]Row, error) {
+	t, err := d.Load(table)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]Row, 0, len(t.Rows)) // no nil: JSON sale [] y no null
+	for _, values := range t.Rows {
+		row := make(Row, len(t.Columns))
+		for i, c := range t.Columns {
+			row[c.Name] = forJSON(c, values[i])
 		}
 		result = append(result, row)
 	}
-	return result, rows.Err()
+	return result, nil
 }
 
-// normalize ajusta valores para que el JSON sea fiel a lo guardado en Access.
+// forJSON ajusta un valor para que el JSON sea fiel a lo guardado en Access.
 //
-// Access guarda fechas SIN zona horaria. El driver las devuelve como
-// time.Time en la zona local de la máquina, y si las serializáramos tal cual
-// saldría un offset inventado (que además cambiaría según dónde se ejecute).
-// Las emitimos como fecha "ingenua": 2006-01-15T00:00:00.
-func normalize(v any) any {
-	if t, ok := v.(time.Time); ok {
-		return t.Format("2006-01-02T15:04:05")
+//   - Fechas: Access las guarda SIN zona horaria. El driver las devuelve como
+//     time.Time en la zona local de la máquina, y serializarlas tal cual
+//     inventaría un offset que cambiaría según dónde se ejecute. Se emiten
+//     como fecha "ingenua": 2006-01-15T00:00:00.
+//   - Numeric: el driver las entrega como string; json.Number se escribe sin
+//     comillas y conserva los decimales exactos (no pasa por float64).
+func forJSON(c Column, v any) any {
+	switch x := v.(type) {
+	case time.Time:
+		return x.Format("2006-01-02T15:04:05")
+	case string:
+		if c.Type == "Numeric" {
+			return json.Number(x)
+		}
 	}
 	return v
 }

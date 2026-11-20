@@ -10,6 +10,7 @@ func newRootCmd() *cobra.Command {
 		SilenceUsage: true, // no imprimir el uso completo ante cada error
 	}
 	root.AddCommand(newDumpCmd())
+	root.AddCommand(newQueryCmd())
 	return root
 }
 

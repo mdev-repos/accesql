@@ -5,8 +5,8 @@ Herramienta de línea de comandos para leer bases Microsoft Access
 Pensada para que sistemas legacy en Access puedan alimentar a otras
 aplicaciones (PHP, etc.) con JSON.
 
-> Estado: MVP. Solo existe el comando `dump`. Roadmap: `query` (SQL estilo
-> MySQL), `serve` (protocolo MySQL en un puerto) y `ui` (TUI).
+> Estado: MVP. Comandos: `dump` y `query`. Roadmap: `serve` (protocolo MySQL
+> en un puerto) y `ui` (TUI).
 
 ## Compilar
 
@@ -30,6 +30,26 @@ access-tool dump --file testdb/Northwind.accdb --out salida/
 ```
 
 Los mensajes informativos van a stderr; el JSON, a stdout.
+
+### Consultas SQL
+
+`query` carga el archivo en un motor SQL en memoria
+([go-mysql-server](https://github.com/dolthub/go-mysql-server)) y ejecuta la
+consulta con dialecto MySQL: JOIN, GROUP BY, subconsultas, etc. (algo que el
+SQL propio del lector de Access no soporta). Las columnas salen en el orden
+del `SELECT`.
+
+```bash
+access-tool query -f testdb/Northwind.accdb -q \
+  'SELECT c.Company, COUNT(*) AS pedidos
+     FROM Customers c JOIN Orders o ON o.`Customer ID` = c.ID
+    GROUP BY c.Company ORDER BY pedidos DESC LIMIT 3'
+```
+
+Nombres con espacios o símbolos (`Order Details`, `Country/Region`) van entre
+comillas invertidas. Los datos son una foto de solo lectura: cualquier
+escritura SQL afecta solo la copia en memoria, nunca el `.accdb`. En `query`
+los Sí/No salen como `0`/`1` (como en MySQL); `dump` los emite `true`/`false`.
 
 ## Conversión de tipos
 
@@ -70,8 +90,12 @@ De ser necesario, se puede resolver de estas formas:
 
 - **Campos "Complex" de Access** (adjuntos, listas multivalor): se exporta
   solo un entero (por ejemplo `Attachments: 3`), no el contenido.
-- **Orden de columnas:** el JSON ordena las claves alfabéticamente, no según
-  la tabla de Access.
+- **Orden de columnas en `dump`:** el JSON ordena las claves alfabéticamente,
+  no según la tabla de Access (`query` sí respeta el orden del `SELECT`).
+- **Sin índices ni claves en `query`:** no se cargan los índices de Access, por
+  lo que los JOIN sobre tablas muy grandes pueden ser lentos.
+- **Memoria:** `query` copia toda la base a RAM al arrancar y el binario pesa
+  ~57 MB. Consumo y tiempos con bases grandes: sin medir.
 - **Solo lectura** y como foto del archivo en el momento de la lectura.
 
 ## Verificación contra mdbtools
@@ -86,12 +110,19 @@ python3 -I scripts/compare_mdbtools.py bin/access-tool testdb/Northwind.accdb
 Resultado actual: el `.accdb` coincide en todas sus 511 filas; el `.MDB`
 coincide salvo las columnas OLE descritas arriba.
 
+## Bases de prueba
+
+`testdb/` no se versiona (está en `.gitignore`). Para probar, descargá la base
+de ejemplo Northwind (`.accdb` y/o `.mdb`) y dejala en `testdb/`. En uso real,
+cada usuario apunta `--file` a su propia base Access.
+
 ## Estructura del proyecto
 
 ```
 cmd/access-tool/     punto de entrada (main), sin lógica
-internal/cli/        comandos cobra (root, dump)
+internal/cli/        comandos cobra (root, dump, query)
 internal/access/     lectura de Access (envuelve mdbgo)
+internal/engine/     motor SQL en memoria (go-mysql-server) cargado desde Access
 scripts/             herramientas de verificación
-testdb/              bases de ejemplo (Northwind)
+testdb/              bases de prueba locales (Northwind); NO se versiona
 ```
