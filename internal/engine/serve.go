@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/dolthub/go-mysql-server/memory"
 	"github.com/dolthub/go-mysql-server/server"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/vitess/go/mysql"
+	"github.com/dolthub/vitess/go/sqltypes"
+	querypb "github.com/dolthub/vitess/go/vt/proto/query"
 )
 
 // ServeOptions configura el servidor con protocolo MySQL.
@@ -69,9 +72,14 @@ func (e *Engine) Serve(ctx context.Context, opts ServeOptions) error {
 		return sess, nil
 	}
 
-	srv, err := server.NewServer(
+	// Envolvemos el manejador de consultas para que cada una tome el candado
+	// de lectura mientras se ejecuta (ver Engine.mu y Reload).
+	wrap := func(h mysql.Handler) (mysql.Handler, error) {
+		return &lockedHandler{Handler: h, mu: &e.mu}, nil
+	}
+	srv, err := server.NewServerWithHandler(
 		server.Config{Protocol: "tcp", Address: opts.Address},
-		e.eng, sql.NewContext, sessionBuilder, nil,
+		e.eng, sql.NewContext, sessionBuilder, nil, wrap,
 	)
 	if err != nil {
 		return fmt.Errorf("creando servidor: %w", err)
@@ -87,4 +95,42 @@ func (e *Engine) Serve(ctx context.Context, opts ServeOptions) error {
 		return err
 	}
 	return nil
+}
+
+// lockedHandler envuelve el mysql.Handler del motor. Al EMBEBER la interfaz
+// (campo Handler sin nombre) hereda todos sus métodos; solo sobreescribimos los
+// que ejecutan consultas, para tomar el candado de lectura durante cada una.
+type lockedHandler struct {
+	mysql.Handler
+	mu *sync.RWMutex
+}
+
+func (h *lockedHandler) ComInitDB(c *mysql.Conn, schemaName string) error {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.Handler.ComInitDB(c, schemaName)
+}
+
+func (h *lockedHandler) ComQuery(ctx context.Context, c *mysql.Conn, query string, callback mysql.ResultSpoolFn) error {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.Handler.ComQuery(ctx, c, query, callback)
+}
+
+func (h *lockedHandler) ComMultiQuery(ctx context.Context, c *mysql.Conn, query string, callback mysql.ResultSpoolFn) (string, error) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.Handler.ComMultiQuery(ctx, c, query, callback)
+}
+
+func (h *lockedHandler) ComPrepare(ctx context.Context, c *mysql.Conn, query string, prepare *mysql.PrepareData) ([]*querypb.Field, error) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.Handler.ComPrepare(ctx, c, query, prepare)
+}
+
+func (h *lockedHandler) ComStmtExecute(ctx context.Context, c *mysql.Conn, prepare *mysql.PrepareData, callback func(*sqltypes.Result) error) error {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.Handler.ComStmtExecute(ctx, c, prepare, callback)
 }

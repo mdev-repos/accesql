@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"access2mysql/internal/access"
 	"access2mysql/internal/engine"
@@ -29,6 +30,7 @@ func newServeCmd() *cobra.Command {
 		user     string
 		password string
 		database string
+		reload   time.Duration
 	)
 
 	cmd := &cobra.Command{
@@ -38,7 +40,8 @@ func newServeCmd() *cobra.Command {
 Las aplicaciones (PHP con PDO/mysqli, etc.) se conectan con su driver de siempre.
 
 Es una foto de solo lectura: las escrituras (INSERT/UPDATE/DELETE) se rechazan.
-Si el .accdb cambia, reiniciar el servidor para recargarlo.
+Con --reload-every, revisa el archivo periódicamente y lo recarga si cambió;
+mientras recarga, las consultas se pausan (no se duplica la memoria).
 
 Por seguridad escucha solo en 127.0.0.1 y exige usuario y contraseña. La
 contraseña se pasa con --password o, mejor, con la variable ` + passwordEnv + `.`,
@@ -58,6 +61,16 @@ contraseña se pasa con --password o, mejor, con la variable ` + passwordEnv + `
 			}
 			defer src.Close()
 
+			if reload != 0 && reload < 5*time.Second {
+				return fmt.Errorf("--reload-every debe ser 0 (desactivado) o al menos 5s")
+			}
+			// Estado del archivo ANTES de cargar: si cambia durante la carga,
+			// el reload lo detecta.
+			state, err := engine.StatFile(file)
+			if err != nil {
+				return err
+			}
+
 			fmt.Fprintf(cmd.ErrOrStderr(), "cargando %s ...\n", file)
 			eng, err := engine.New(src, database)
 			if err != nil {
@@ -69,6 +82,14 @@ contraseña se pasa con --password o, mejor, con la variable ` + passwordEnv + `
 			// Ctrl+C o SIGTERM cancelan el contexto y el servidor se apaga solo.
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
+
+			if reload > 0 {
+				logf := func(format string, args ...any) {
+					fmt.Fprintf(cmd.ErrOrStderr(), format+"\n", args...)
+				}
+				go eng.AutoReload(ctx, file, reload, state, logf)
+				fmt.Fprintf(cmd.ErrOrStderr(), "revisando cambios del archivo cada %v\n", reload)
+			}
 
 			addr := net.JoinHostPort(host, strconv.Itoa(port))
 			fmt.Fprintf(cmd.ErrOrStderr(), "escuchando en %s (solo lectura), base %q, usuario %q. Ctrl+C para detener\n", addr, database, user)
@@ -86,6 +107,7 @@ contraseña se pasa con --password o, mejor, con la variable ` + passwordEnv + `
 	cmd.Flags().StringVarP(&user, "user", "u", "access", "usuario para conectarse")
 	cmd.Flags().StringVar(&password, "password", "", "contraseña (o variable "+passwordEnv+")")
 	cmd.Flags().StringVarP(&database, "database", "d", engine.DefaultDatabase, "nombre de la base que ven los clientes")
+	cmd.Flags().DurationVar(&reload, "reload-every", 0, "revisar el archivo cada este tiempo y recargarlo si cambió (ej. 5m; 0 = nunca)")
 	cmd.MarkFlagRequired("file")
 	return cmd
 }

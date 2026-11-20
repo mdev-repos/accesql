@@ -11,6 +11,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
+	"sync"
 
 	"access2mysql/internal/access"
 
@@ -28,7 +30,13 @@ type Engine struct {
 	eng      *sqle.Engine
 	ctx      *sql.Context
 	provider *memory.DbProvider
+	db       *memory.Database
 	dbName   string
+
+	// mu coordina las consultas con el reload: cada consulta toma RLock (hay
+	// muchas a la vez) y Reload toma Lock, que espera a las que están en curso
+	// y frena las nuevas hasta terminar.
+	mu sync.RWMutex
 }
 
 // New copia todas las tablas de src al motor, dentro de una base llamada
@@ -54,7 +62,7 @@ func New(src *access.DB, dbName string) (*Engine, error) {
 			return nil, fmt.Errorf("cargando tabla %q: %w", name, err)
 		}
 	}
-	return &Engine{eng: sqle.NewDefault(provider), ctx: ctx, provider: provider, dbName: dbName}, nil
+	return &Engine{eng: sqle.NewDefault(provider), ctx: ctx, provider: provider, db: db, dbName: dbName}, nil
 }
 
 // loadTable crea la tabla en memoria con el esquema de Access y la llena.
@@ -90,15 +98,42 @@ func loadTable(ctx *sql.Context, db *memory.Database, t *access.Table) error {
 	return ins.Close(ctx)
 }
 
-// Query ejecuta una sentencia SQL (dialecto MySQL) y devuelve el resultado.
-func (e *Engine) Query(q string) (*Result, error) {
-	schema, iter, _, err := e.eng.Query(e.ctx, q)
+// Tables devuelve los nombres de las tablas cargadas, ordenados.
+func (e *Engine) Tables() ([]string, error) {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	names, err := e.db.GetTableNames(e.ctx)
 	if err != nil {
 		return nil, err
 	}
+	sort.Strings(names)
+	return names, nil
+}
+
+// Query ejecuta una sentencia SQL (dialecto MySQL) y devuelve el resultado.
+func (e *Engine) Query(q string) (*Result, error) {
+	res, _, err := e.QueryN(q, 0)
+	return res, err
+}
+
+// QueryN es como Query pero devuelve como máximo max filas (max <= 0 significa
+// sin límite). truncated indica que había más filas que las devueltas. Sirve
+// para interfaces interactivas, donde un SELECT * sobre una tabla enorme no
+// debe llenar la memoria ni colgar la pantalla.
+//
+// No es seguro llamarla desde varias goroutines a la vez: todas comparten una
+// sesión del motor.
+func (e *Engine) QueryN(q string, max int) (res *Result, truncated bool, err error) {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	schema, iter, _, err := e.eng.Query(e.ctx, q)
+	if err != nil {
+		return nil, false, err
+	}
 	defer iter.Close(e.ctx)
 
-	res := &Result{Columns: make([]string, len(schema)), Rows: [][]any{}}
+	res = &Result{Columns: make([]string, len(schema)), Rows: [][]any{}}
 	for i, c := range schema {
 		res.Columns[i] = c.Name
 	}
@@ -108,7 +143,10 @@ func (e *Engine) Query(q string) (*Result, error) {
 			break
 		}
 		if err != nil {
-			return nil, err
+			return nil, false, err
+		}
+		if max > 0 && len(res.Rows) >= max {
+			return res, true, nil
 		}
 		out := make([]any, len(row))
 		for i, v := range row {
@@ -116,5 +154,5 @@ func (e *Engine) Query(q string) (*Result, error) {
 		}
 		res.Rows = append(res.Rows, out)
 	}
-	return res, nil
+	return res, false, nil
 }
