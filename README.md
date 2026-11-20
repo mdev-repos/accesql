@@ -5,7 +5,7 @@ Herramienta de línea de comandos para leer bases Microsoft Access
 Pensada para que sistemas legacy en Access puedan alimentar a otras
 aplicaciones (PHP, etc.) con JSON.
 
-> Estado: MVP. Comandos: `dump`, `query` y `serve`. Roadmap: `ui` (TUI).
+> Estado: MVP. Comandos: `dump`, `query`, `serve` y `ui` (interfaz de terminal).
 
 ## Compilar
 
@@ -50,6 +50,30 @@ comillas invertidas. Los datos son una foto de solo lectura: cualquier
 escritura SQL afecta solo la copia en memoria, nunca el `.accdb`. En `query`
 los Sí/No salen como `0`/`1` (como en MySQL); `dump` los emite `true`/`false`.
 
+### Interfaz interactiva (`ui`)
+
+```bash
+access-tool ui --file datos.accdb
+```
+
+Abre una interfaz de terminal (TUI) para no tener que tipear comandos: lista de
+tablas a la izquierda, editor SQL arriba y grilla de resultados abajo.
+
+| Tecla | Acción |
+|---|---|
+| `↑` `↓` + `Enter` (en Tablas) | ver las primeras 100 filas de la tabla |
+| `s` (en Tablas) | ver la estructura (`DESCRIBE`) |
+| `Tab` / `Shift+Tab` | cambiar de panel |
+| `Ctrl+R` | ejecutar el SQL del editor |
+| `←` `→` `↑` `↓` `PgUp` `PgDn` `Home` `End` (en la grilla) | recorrer el resultado |
+| `Ctrl+S` | guardar el resultado como `resultado-AAAAMMDD-HHMMSS.json` |
+| `Ctrl+C` | salir |
+
+Muestra hasta 1.000 filas por consulta (avisa si hay más) para que un
+`SELECT *` sobre una tabla enorme no cuelgue la pantalla. Trabaja sobre una
+foto de solo lectura, igual que `query`. Una consulta en curso no se puede
+cancelar. Necesita una terminal de al menos 60x16.
+
 ### Servidor MySQL (`serve`)
 
 `serve` expone el Access como si fuera un servidor MySQL, de modo que las
@@ -59,7 +83,8 @@ Es de **solo lectura**: INSERT/UPDATE/DELETE devuelven un error claro.
 ```bash
 export ACCESS_TOOL_PASSWORD='una-clave-larga'
 access-tool serve --file datos.accdb --port 3306
-# opciones: --host (127.0.0.1), --user (access), --database (access)
+# opciones: --host (127.0.0.1), --user (access), --database (access),
+#           --reload-every 5m (recarga el archivo si cambió)
 ```
 
 Desde PHP:
@@ -82,20 +107,17 @@ Seguridad:
 - Las funciones de archivos del motor (`LOAD_FILE`, `INTO OUTFILE`,
   `LOAD DATA`) están deshabilitadas: de lo contrario, un cliente autenticado
   (o una inyección SQL en una app) podría leer o crear archivos del servidor.
-- Es una foto: si el `.accdb` cambia, reiniciar el servidor para recargarlo.
-  Se apaga limpiamente con Ctrl+C o SIGTERM.
-
-Nota para PHP: igual que con un MySQL real, los `DECIMAL` (columnas Numeric y
-Currency de Access) llegan a PHP como **string** (`"32.38"`), para no perder
-precisión; los enteros llegan como `int` con preparadas nativas. Quien necesite
-número hace el cast (`(float)`) en la aplicación.
-
-## Add-ons posibles (no implementados)
-
-- **Endpoint HTTP que devuelva JSON** (`GET /query?sql=...`), para aplicaciones
-  que prefieran no usar un driver MySQL. Reutilizaría el mismo motor. Implica
-  otra superficie de seguridad (autenticación, límites, solo lectura), por lo
-  que se hará solo si hace falta.
+- Es una foto del archivo. Con `--reload-every 5m` el servidor revisa su fecha
+  y tamaño cada 5 minutos y, si cambió (y lleva más de 2 s sin tocarse, por si
+  Access lo está escribiendo), lo recarga. **Durante la recarga las consultas se
+  pausan** (duran decenas de milisegundos con Northwind; con bases grandes será
+  proporcional) y luego siguen con los datos nuevos, incluidas las sentencias
+  preparadas abiertas. Para no duplicar la memoria se reemplaza tabla por tabla
+  (el pico extra es el de la tabla más grande). Si el archivo está corrupto, el
+  error se registra, el servidor sigue con los datos anteriores y reintenta en
+  el próximo ciclo; si falla a mitad, pueden quedar unas tablas nuevas y otras
+  viejas hasta el reintento. Sin `--reload-every`, hay que reiniciar para
+  recargar. Se apaga limpiamente con Ctrl+C o SIGTERM.
 
 ## Conversión de tipos
 
@@ -148,7 +170,7 @@ De ser necesario, se puede resolver de estas formas:
   **PHP 8.3 real** (PDO con preparadas emuladas y nativas, y mysqli):
   `scripts/php_smoke_test.php` (35 comprobaciones: tipos, acentos, solo
   lectura, autenticación, aislamiento de archivos, conexiones repetidas).
-- **Un solo usuario**, sin TLS, y la base completa se recarga solo al reiniciar.
+- **Un solo usuario** y sin TLS.
 - **Memoria:** `query` y `serve` copian toda la base a RAM al arrancar y el binario pesa
   ~57 MB. Consumo y tiempos con bases grandes: sin medir.
 - **Solo lectura** y como foto del archivo en el momento de la lectura.
@@ -171,13 +193,33 @@ coincide salvo las columnas OLE descritas arriba.
 de ejemplo Northwind (`.accdb` y/o `.mdb`) y dejala en `testdb/`. En uso real,
 cada usuario apunta `--file` a su propia base Access.
 
+## Nota técnica: caché de archivos de mdbgo
+
+`mdbgo` conserva en RAM una copia completa de cada `.accdb` que abre (hasta
+512 MB) y no la libera al cerrar. Como los datos ya se copian al motor SQL,
+eso sería memoria duplicada permanente (medido: 20 aperturas de un archivo de
+3,7 MB dejaban ~70 MB retenidos). `internal/access/nocache.go` lo desactiva
+con `//go:linkname`, porque la variable está en un paquete `internal` de
+`mdbgo`. Es frágil: si una versión futura de `mdbgo` la renombra, el programa
+dejará de compilar (falla ruidosamente). Lo ideal es pedir en `mdbgo` una
+opción pública.
+
+## Tests
+
+```bash
+go test ./...                                   # TUI: teclas, resultados, geometría en varios tamaños
+python3 -I scripts/compare_mdbtools.py bin/access-tool testdb/Northwind.accdb
+php scripts/php_smoke_test.php 127.0.0.1 3307 access secreta   # con `serve` corriendo
+```
+
 ## Estructura del proyecto
 
 ```
 cmd/access-tool/     punto de entrada (main), sin lógica
-internal/cli/        comandos cobra (root, dump, query, serve)
+internal/cli/        comandos cobra (root, dump, query, serve, ui)
 internal/access/     lectura de Access (envuelve mdbgo)
 internal/engine/     motor SQL en memoria (go-mysql-server) cargado desde Access
+internal/tui/        interfaz de terminal (bubbletea)
 internal/jsonout/    JSON con orden de columnas conservado
 scripts/             verificación (mdbtools, PHP)
 testdb/              bases de prueba locales (Northwind); NO se versiona
