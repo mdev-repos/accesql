@@ -19,18 +19,21 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
-// dbName es el nombre de la base dentro del motor (lo que MySQL llamaría
-// `USE access`).
-const dbName = "access"
+// DefaultDatabase es el nombre por defecto de la base dentro del motor (lo que
+// MySQL llamaría `USE access`).
+const DefaultDatabase = "access"
 
 // Engine es una base Access cargada y lista para consultar.
 type Engine struct {
-	eng *sqle.Engine
-	ctx *sql.Context
+	eng      *sqle.Engine
+	ctx      *sql.Context
+	provider *memory.DbProvider
+	dbName   string
 }
 
-// New copia todas las tablas de src al motor.
-func New(src *access.DB) (*Engine, error) {
+// New copia todas las tablas de src al motor, dentro de una base llamada
+// dbName (las apps que se conecten por red la usarán como nombre de base).
+func New(src *access.DB, dbName string) (*Engine, error) {
 	tables, err := src.Tables()
 	if err != nil {
 		return nil, err
@@ -51,7 +54,7 @@ func New(src *access.DB) (*Engine, error) {
 			return nil, fmt.Errorf("cargando tabla %q: %w", name, err)
 		}
 	}
-	return &Engine{eng: sqle.NewDefault(provider), ctx: ctx}, nil
+	return &Engine{eng: sqle.NewDefault(provider), ctx: ctx, provider: provider, dbName: dbName}, nil
 }
 
 // loadTable crea la tabla en memoria con el esquema de Access y la llena.

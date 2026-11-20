@@ -5,8 +5,7 @@ Herramienta de línea de comandos para leer bases Microsoft Access
 Pensada para que sistemas legacy en Access puedan alimentar a otras
 aplicaciones (PHP, etc.) con JSON.
 
-> Estado: MVP. Comandos: `dump` y `query`. Roadmap: `serve` (protocolo MySQL
-> en un puerto) y `ui` (TUI).
+> Estado: MVP. Comandos: `dump`, `query` y `serve`. Roadmap: `ui` (TUI).
 
 ## Compilar
 
@@ -51,6 +50,41 @@ comillas invertidas. Los datos son una foto de solo lectura: cualquier
 escritura SQL afecta solo la copia en memoria, nunca el `.accdb`. En `query`
 los Sí/No salen como `0`/`1` (como en MySQL); `dump` los emite `true`/`false`.
 
+### Servidor MySQL (`serve`)
+
+`serve` expone el Access como si fuera un servidor MySQL, de modo que las
+aplicaciones (PHP con PDO/mysqli, etc.) se conectan con su driver de siempre.
+Es de **solo lectura**: INSERT/UPDATE/DELETE devuelven un error claro.
+
+```bash
+export ACCESS_TOOL_PASSWORD='una-clave-larga'
+access-tool serve --file datos.accdb --port 3306
+# opciones: --host (127.0.0.1), --user (access), --database (access)
+```
+
+Desde PHP:
+
+```php
+$pdo = new PDO('mysql:host=127.0.0.1;port=3306;dbname=access;charset=utf8mb4',
+               'access', getenv('ACCESS_TOOL_PASSWORD'));
+$filas = $pdo->query('SELECT * FROM Clientes LIMIT 10')->fetchAll(PDO::FETCH_ASSOC);
+echo json_encode($filas);
+```
+
+Seguridad:
+
+- Escucha solo en `127.0.0.1` por defecto y exige usuario y contraseña (se
+  pasa por la variable `ACCESS_TOOL_PASSWORD`, mejor que `--password`, que
+  queda visible en la lista de procesos). Sin contraseña no arranca.
+- **No hay cifrado (TLS).** Si las apps están en otra máquina, no usar
+  `--host 0.0.0.0` a través de una red no confiable: conectar por un túnel SSH
+  o una VPN.
+- Las funciones de archivos del motor (`LOAD_FILE`, `INTO OUTFILE`,
+  `LOAD DATA`) están deshabilitadas: de lo contrario, un cliente autenticado
+  (o una inyección SQL en una app) podría leer o crear archivos del servidor.
+- Es una foto: si el `.accdb` cambia, reiniciar el servidor para recargarlo.
+  Se apaga limpiamente con Ctrl+C o SIGTERM.
+
 ## Conversión de tipos
 
 | Access | JSON |
@@ -64,6 +98,12 @@ los Sí/No salen como `0`/`1` (como en MySQL); `dump` los emite `true`/`false`.
 | Nulo | `null` |
 
 Access guarda las fechas sin zona horaria, por eso no se les agrega una.
+
+En `query` y `serve` el texto se compara **sin distinguir mayúsculas** (como
+Access y como el MySQL 8 por defecto: `utf8mb4_0900_ai_ci`), por lo que
+`WHERE Nombre = 'perez'` encuentra `Pérez`... y también `Perez`, porque esa
+collation ignora los acentos. Si se prefiere distinguir acentos, cambiar a
+`utf8mb4_0900_as_ci` en `internal/engine/types.go`.
 
 ## Limitaciones conocidas
 
@@ -94,7 +134,11 @@ De ser necesario, se puede resolver de estas formas:
   no según la tabla de Access (`query` sí respeta el orden del `SELECT`).
 - **Sin índices ni claves en `query`:** no se cargan los índices de Access, por
   lo que los JOIN sobre tablas muy grandes pueden ser lentos.
-- **Memoria:** `query` copia toda la base a RAM al arrancar y el binario pesa
+- **Probado con** el cliente `mysql` (MariaDB) y el driver Go `go-sql-driver`
+  (sentencias preparadas, 30 conexiones simultáneas). **Pendiente: probar con
+  PHP real** (PDO/mysqli).
+- **Un solo usuario**, sin TLS, y la base completa se recarga solo al reiniciar.
+- **Memoria:** `query` y `serve` copian toda la base a RAM al arrancar y el binario pesa
   ~57 MB. Consumo y tiempos con bases grandes: sin medir.
 - **Solo lectura** y como foto del archivo en el momento de la lectura.
 
@@ -120,7 +164,7 @@ cada usuario apunta `--file` a su propia base Access.
 
 ```
 cmd/access-tool/     punto de entrada (main), sin lógica
-internal/cli/        comandos cobra (root, dump, query)
+internal/cli/        comandos cobra (root, dump, query, serve)
 internal/access/     lectura de Access (envuelve mdbgo)
 internal/engine/     motor SQL en memoria (go-mysql-server) cargado desde Access
 scripts/             herramientas de verificación

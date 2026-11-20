@@ -11,6 +11,7 @@ func newRootCmd() *cobra.Command {
 	}
 	root.AddCommand(newDumpCmd())
 	root.AddCommand(newQueryCmd())
+	root.AddCommand(newServeCmd())
 	return root
 }
 

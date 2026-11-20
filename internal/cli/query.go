@@ -31,7 +31,7 @@ Los datos son una foto de solo lectura: nada se escribe en el .accdb.`,
 			}
 			defer src.Close()
 
-			eng, err := engine.New(src)
+			eng, err := engine.New(src, engine.DefaultDatabase)
 			if err != nil {
 				return err
 			}

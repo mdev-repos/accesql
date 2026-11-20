@@ -38,9 +38,16 @@ func sqlType(t *access.Table, col int) sql.Type {
 	case "Binary", "OLE":
 		return gtypes.LongBlob
 	default: // Text, Memo/Hyperlink, Replication ID y tipos desconocidos
-		return gtypes.LongText
+		return textType
 	}
 }
+
+// textType es el tipo de las columnas de texto. La collation decide cómo se
+// comparan y ordenan: Access NO distingue mayúsculas de minúsculas, y
+// utf8mb4_0900_ai_ci (la de MySQL 8 por defecto) tampoco, así que 'abc' = 'ABC'
+// funciona como las apps esperan. Además ignora acentos ('é' = 'e'); si se
+// prefiere distinguirlos, usar sql.Collation_utf8mb4_0900_as_ci.
+var textType = gtypes.CreateLongText(sql.Collation_utf8mb4_0900_ai_ci)
 
 // numericScale calcula cuántos decimales usar para una columna Numeric: el
 // máximo que aparece en los datos (tope 30, el máximo de MySQL).
