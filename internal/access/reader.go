@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"time"
 
+	"access2mysql/internal/jsonout"
+
 	// El guion bajo importa el paquete solo por su efecto secundario:
 	// registrar el driver "gomdb" (Go puro, sin CGO) en database/sql.
 	_ "github.com/Felamande/mdbgo/driver/gomdb"
@@ -18,9 +20,6 @@ import (
 type DB struct {
 	sqlDB *sql.DB
 }
-
-// Row es una fila lista para JSON: nombre de columna -> valor.
-type Row map[string]any
 
 // Column describe una columna: su nombre y el tipo según Access
 // ("Text", "Long Integer", "Numeric", "DateTime", ...).
@@ -109,22 +108,27 @@ func (d *DB) Load(table string) (*Table, error) {
 	return t, nil
 }
 
-// ReadTable devuelve todas las filas de una tabla, adaptadas para JSON.
-func (d *DB) ReadTable(table string) ([]Row, error) {
+// ReadTable devuelve todas las filas de una tabla, adaptadas para JSON y con
+// las columnas en el mismo orden que en Access.
+func (d *DB) ReadTable(table string) (jsonout.Records, error) {
 	t, err := d.Load(table)
 	if err != nil {
-		return nil, err
+		return jsonout.Records{}, err
 	}
 
-	result := make([]Row, 0, len(t.Rows)) // no nil: JSON sale [] y no null
-	for _, values := range t.Rows {
-		row := make(Row, len(t.Columns))
-		for i, c := range t.Columns {
-			row[c.Name] = forJSON(c, values[i])
-		}
-		result = append(result, row)
+	cols := make([]string, len(t.Columns))
+	for i, c := range t.Columns {
+		cols[i] = c.Name
 	}
-	return result, nil
+	rows := make([][]any, len(t.Rows)) // no nil: JSON sale [] y no null
+	for n, values := range t.Rows {
+		row := make([]any, len(values))
+		for i, v := range values {
+			row[i] = forJSON(t.Columns[i], v)
+		}
+		rows[n] = row
+	}
+	return jsonout.Records{Columns: cols, Rows: rows}, nil
 }
 
 // forJSON ajusta un valor para que el JSON sea fiel a lo guardado en Access.

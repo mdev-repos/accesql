@@ -85,6 +85,18 @@ Seguridad:
 - Es una foto: si el `.accdb` cambia, reiniciar el servidor para recargarlo.
   Se apaga limpiamente con Ctrl+C o SIGTERM.
 
+Nota para PHP: igual que con un MySQL real, los `DECIMAL` (columnas Numeric y
+Currency de Access) llegan a PHP como **string** (`"32.38"`), para no perder
+precisión; los enteros llegan como `int` con preparadas nativas. Quien necesite
+número hace el cast (`(float)`) en la aplicación.
+
+## Add-ons posibles (no implementados)
+
+- **Endpoint HTTP que devuelva JSON** (`GET /query?sql=...`), para aplicaciones
+  que prefieran no usar un driver MySQL. Reutilizaría el mismo motor. Implica
+  otra superficie de seguridad (autenticación, límites, solo lectura), por lo
+  que se hará solo si hace falta.
+
 ## Conversión de tipos
 
 | Access | JSON |
@@ -130,13 +142,12 @@ De ser necesario, se puede resolver de estas formas:
 
 - **Campos "Complex" de Access** (adjuntos, listas multivalor): se exporta
   solo un entero (por ejemplo `Attachments: 3`), no el contenido.
-- **Orden de columnas en `dump`:** el JSON ordena las claves alfabéticamente,
-  no según la tabla de Access (`query` sí respeta el orden del `SELECT`).
 - **Sin índices ni claves en `query`:** no se cargan los índices de Access, por
   lo que los JOIN sobre tablas muy grandes pueden ser lentos.
-- **Probado con** el cliente `mysql` (MariaDB) y el driver Go `go-sql-driver`
-  (sentencias preparadas, 30 conexiones simultáneas). **Pendiente: probar con
-  PHP real** (PDO/mysqli).
+- **Probado con** el cliente `mysql` (MariaDB), el driver Go `go-sql-driver` y
+  **PHP 8.3 real** (PDO con preparadas emuladas y nativas, y mysqli):
+  `scripts/php_smoke_test.php` (35 comprobaciones: tipos, acentos, solo
+  lectura, autenticación, aislamiento de archivos, conexiones repetidas).
 - **Un solo usuario**, sin TLS, y la base completa se recarga solo al reiniciar.
 - **Memoria:** `query` y `serve` copian toda la base a RAM al arrancar y el binario pesa
   ~57 MB. Consumo y tiempos con bases grandes: sin medir.
@@ -167,6 +178,7 @@ cmd/access-tool/     punto de entrada (main), sin lógica
 internal/cli/        comandos cobra (root, dump, query, serve)
 internal/access/     lectura de Access (envuelve mdbgo)
 internal/engine/     motor SQL en memoria (go-mysql-server) cargado desde Access
-scripts/             herramientas de verificación
+internal/jsonout/    JSON con orden de columnas conservado
+scripts/             verificación (mdbtools, PHP)
 testdb/              bases de prueba locales (Northwind); NO se versiona
 ```

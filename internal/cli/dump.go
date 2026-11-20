@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"access2mysql/internal/access"
+	"access2mysql/internal/jsonout"
 
 	"github.com/spf13/cobra"
 )
@@ -39,15 +40,16 @@ func newDumpCmd() *cobra.Command {
 				tables = []string{table}
 			}
 
-			// Sin --out: un único objeto JSON {"tabla": [filas...]} por stdout.
+			// Sin --out: un único objeto JSON {"tabla": [filas...]} por stdout,
+			// con las tablas en el orden del archivo.
 			if outDir == "" {
-				all := make(map[string][]access.Row, len(tables))
+				all := make(jsonout.Object, 0, len(tables))
 				for _, t := range tables {
 					rows, err := db.ReadTable(t)
 					if err != nil {
 						return err
 					}
-					all[t] = rows
+					all = append(all, jsonout.Field{Key: t, Value: rows})
 				}
 				return writeJSON(cmd.OutOrStdout(), all)
 			}
@@ -65,7 +67,7 @@ func newDumpCmd() *cobra.Command {
 				if err := writeJSONFile(path, rows); err != nil {
 					return err
 				}
-				fmt.Fprintf(cmd.ErrOrStderr(), "%s: %d filas\n", path, len(rows))
+				fmt.Fprintf(cmd.ErrOrStderr(), "%s: %d filas\n", path, len(rows.Rows))
 			}
 			return nil
 		},
