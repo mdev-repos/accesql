@@ -4,8 +4,8 @@ package cli
 import (
 	"os"
 
-	"access2mysql/internal/session"
-	"access2mysql/internal/tui/app"
+	"accesql/internal/session"
+	"accesql/internal/tui/app"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
@@ -26,7 +26,7 @@ func isTerminal() bool {
 func newRootCmd() *cobra.Command {
 	var file string
 	root := &cobra.Command{
-		Use:   "access-tool",
+		Use:   "accesql",
 		Short: "Herramienta para leer bases Microsoft Access (solo lectura)",
 		Long: `Accesql lee bases de Microsoft Access (.accdb / .mdb) en modo solo lectura y las
 ofrece como JSON, como servidor MySQL o como scripts SQL de MySQL.
@@ -35,9 +35,9 @@ Sin argumentos abre un menú interactivo en la terminal (es lo que ocurre con
 doble clic): abrir una base, generar la imagen MySQL, exponerla como servidor,
 consultarla, convertirla y ver sus relaciones. También puede abrir la interfaz
 gráfica en el navegador, sobre la misma base ya cargada.`,
-		Example: `  access-tool                      # menú interactivo
-  access-tool -f datos.accdb       # menú con la base ya elegida
-  access-tool dump -f datos.accdb  # JSON, para scripts y automatización`,
+		Example: `  accesql                      # menú interactivo
+  accesql -f datos.accdb       # menú con la base ya elegida
+  accesql dump -f datos.accdb  # JSON, para scripts y automatización`,
 		SilenceUsage: true, // no imprimir el uso completo ante cada error
 		// Sin argumentos (por ejemplo, con doble clic) abre el menú interactivo.
 		RunE: func(cmd *cobra.Command, args []string) error {

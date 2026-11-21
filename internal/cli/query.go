@@ -3,8 +3,8 @@ package cli
 import (
 	"fmt"
 
-	"access2mysql/internal/access"
-	"access2mysql/internal/engine"
+	"accesql/internal/access"
+	"accesql/internal/engine"
 
 	"github.com/spf13/cobra"
 )
@@ -23,7 +23,7 @@ func newQueryCmd() *cobra.Command {
 entre comillas invertidas: SELECT * FROM ` + "`Order Details`" + `.
 
 Los datos son una foto de solo lectura: nada se escribe en el .accdb.`,
-		Example: `  access-tool query -f testdb/Northwind.accdb -q "SELECT ID, Company FROM Customers LIMIT 3"`,
+		Example: `  accesql query -f testdb/Northwind.accdb -q "SELECT ID, Company FROM Customers LIMIT 3"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			src, err := access.Open(file)
 			if err != nil {

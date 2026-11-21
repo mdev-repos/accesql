@@ -1,4 +1,4 @@
-module access2mysql
+module accesql
 
 go 1.26.11
 

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	"access2mysql/internal/jsonout"
+	"accesql/internal/jsonout"
 
 	// El guion bajo importa el paquete solo por su efecto secundario:
 	// registrar el driver "gomdb" (Go puro, sin CGO) en database/sql.

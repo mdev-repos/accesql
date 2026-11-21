@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"access2mysql/internal/session"
+	"accesql/internal/session"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"

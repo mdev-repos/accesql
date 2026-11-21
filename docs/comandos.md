@@ -1,14 +1,14 @@
 # Referencia de comandos
 
-El ejecutable se llama `access-tool`. Sin argumentos abre el [menú interactivo](#menú-interactivo-sin-argumentos);
+El ejecutable se llama `accesql`. Sin argumentos abre el [menú interactivo](#menú-interactivo-sin-argumentos);
 los comandos (`dump`, `query`, `serve`, `web`) sirven para scripts y automatización.
 
 ```text
-access-tool [-f archivo]                 menú interactivo en la terminal
-access-tool dump  -f archivo [-t tabla] [-o carpeta]
-access-tool query -f archivo -q "SELECT ..."
-access-tool serve -f archivo [--host ...] [-p 3306] [-u usuario] [-d base] [--reload-every 5m]
-access-tool web   [-f archivo] [--host ...] [-p 8080] [--open]
+accesql [-f archivo]                 menú interactivo en la terminal
+accesql dump  -f archivo [-t tabla] [-o carpeta]
+accesql query -f archivo -q "SELECT ..."
+accesql serve -f archivo [--host ...] [-p 3306] [-u usuario] [-d base] [--reload-every 5m]
+accesql web   [-f archivo] [--host ...] [-p 8080] [--open]
 ```
 
 Los mensajes informativos van a `stderr`; los datos, a `stdout`. Todo es de **solo lectura**:
@@ -19,8 +19,8 @@ el archivo de Access nunca se modifica.
 ## Menú interactivo (sin argumentos)
 
 ```bash
-access-tool                    # menú interactivo
-access-tool -f datos.accdb     # con la base ya elegida
+accesql                    # menú interactivo
+accesql -f datos.accdb     # con la base ya elegida
 ```
 
 Es lo que ocurre al hacer doble clic en el ejecutable. Un menú con el logo de Accesql: las opciones
@@ -59,10 +59,10 @@ y scripts) se guardan **junto a la base abierta**, o en la carpeta de trabajo si
 
 ```bash
 # Una tabla por stdout
-access-tool dump --file datos.accdb --table Products
+accesql dump --file datos.accdb --table Products
 
 # Todas las tablas: un <tabla>.json por tabla en la carpeta indicada
-access-tool dump --file datos.accdb --out salida/
+accesql dump --file datos.accdb --out salida/
 ```
 
 | Opción | Descripción |
@@ -84,7 +84,7 @@ MySQL**: `JOIN`, `GROUP BY`, subconsultas, etc. (algo que el SQL propio del lect
 soporta). Las columnas salen en el orden del `SELECT`.
 
 ```bash
-access-tool query -f datos.accdb -q \
+accesql query -f datos.accdb -q \
   'SELECT c.Company, COUNT(*) AS pedidos
      FROM Customers c JOIN Orders o ON o.`Customer ID` = c.ID
     GROUP BY c.Company ORDER BY pedidos DESC LIMIT 3'
@@ -108,15 +108,15 @@ PDO/mysqli, etc.) se conectan con su driver de siempre. Es de **solo lectura**: 
 devuelven un error claro.
 
 ```bash
-export ACCESS_TOOL_PASSWORD='una-clave-larga'
-access-tool serve --file datos.accdb --port 3306
+export ACCESQL_PASSWORD='una-clave-larga'
+accesql serve --file datos.accdb --port 3306
 ```
 
 Desde PHP:
 
 ```php
 $pdo = new PDO('mysql:host=127.0.0.1;port=3306;dbname=access;charset=utf8mb4',
-               'access', getenv('ACCESS_TOOL_PASSWORD'));
+               'access', getenv('ACCESQL_PASSWORD'));
 $filas = $pdo->query('SELECT * FROM Clientes LIMIT 10')->fetchAll(PDO::FETCH_ASSOC);
 echo json_encode($filas);
 ```
@@ -127,7 +127,7 @@ echo json_encode($filas);
 | `--host` | dirección donde escuchar (por defecto `127.0.0.1`; `0.0.0.0` expone a toda la red) |
 | `-p, --port` | puerto TCP (por defecto `3306`) |
 | `-u, --user` | usuario para conectarse (por defecto `access`) |
-| `--password` | contraseña; mejor usar la variable `ACCESS_TOOL_PASSWORD`, porque `--password` queda visible en la lista de procesos. **Sin contraseña no arranca.** |
+| `--password` | contraseña; mejor usar la variable `ACCESQL_PASSWORD`, porque `--password` queda visible en la lista de procesos. **Sin contraseña no arranca.** |
 | `-d, --database` | nombre de la base que ven los clientes (por defecto `access`) |
 | `--reload-every` | revisar el archivo cada este tiempo y recargarlo si cambió (ej. `5m`; `0` = nunca) |
 
@@ -150,8 +150,8 @@ si cambió (y lleva más de 2 s sin tocarse, por si Access lo está escribiendo)
 ## `web`: interfaz gráfica
 
 ```bash
-access-tool web --open                 # elegís el archivo desde la página
-access-tool web -f datos.accdb --open  # o lo dejás preseleccionado
+accesql web --open                 # elegís el archivo desde la página
+accesql web -f datos.accdb --open  # o lo dejás preseleccionado
 ```
 
 Levanta la página local y, al iniciar, imprime un enlace del estilo

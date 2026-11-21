@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"access2mysql/internal/access"
-	"access2mysql/internal/jsonout"
+	"accesql/internal/access"
+	"accesql/internal/jsonout"
 
 	"github.com/spf13/cobra"
 )
@@ -23,8 +23,8 @@ func newDumpCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "dump",
 		Short: "Exporta tablas de un Access a JSON",
-		Example: `  access-tool dump --file testdb/Northwind.accdb --table Products
-  access-tool dump --file testdb/Northwind.accdb --out salida/`,
+		Example: `  accesql dump --file testdb/Northwind.accdb --table Products
+  accesql dump --file testdb/Northwind.accdb --out salida/`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			db, err := access.Open(file)
 			if err != nil {

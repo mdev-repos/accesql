@@ -33,9 +33,9 @@ import (
 	"strings"
 	"time"
 
-	"access2mysql/internal/migrate"
-	"access2mysql/internal/session"
-	"access2mysql/internal/version"
+	"accesql/internal/migrate"
+	"accesql/internal/session"
+	"accesql/internal/version"
 )
 
 //go:embed static

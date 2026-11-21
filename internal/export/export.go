@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"access2mysql/internal/jsonout"
+	"accesql/internal/jsonout"
 )
 
 // JSON escribe el resultado como una lista de objetos {columna: valor}, con las

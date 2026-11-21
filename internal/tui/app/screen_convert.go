@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"access2mysql/internal/engine"
-	"access2mysql/internal/migrate"
-	"access2mysql/internal/session"
+	"accesql/internal/engine"
+	"accesql/internal/migrate"
+	"accesql/internal/session"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"

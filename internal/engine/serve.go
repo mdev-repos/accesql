@@ -260,7 +260,7 @@ func (e *Engine) Lockdown() (cleanup func(), err error) {
 	// puede desactivar, pero sí apuntar a un directorio vacío y sin permiso de
 	// escritura: así no hay nada que leer ni dónde escribir. Los clientes no
 	// pueden cambiarla (no es dinámica).
-	sandbox, err := os.MkdirTemp("", "access-tool-sandbox-")
+	sandbox, err := os.MkdirTemp("", "accesql-sandbox-")
 	if err != nil {
 		return nil, fmt.Errorf("creando directorio aislado: %w", err)
 	}

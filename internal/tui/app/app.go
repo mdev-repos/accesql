@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"access2mysql/internal/session"
-	"access2mysql/internal/web"
+	"accesql/internal/session"
+	"accesql/internal/web"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"access2mysql/internal/engine"
-	"access2mysql/internal/export"
-	"access2mysql/internal/migrate"
-	"access2mysql/internal/version"
+	"accesql/internal/engine"
+	"accesql/internal/export"
+	"accesql/internal/migrate"
+	"accesql/internal/version"
 )
 
 type tableInfos = engine.TableInfo

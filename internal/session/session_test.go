@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"access2mysql/internal/migrate"
+	"accesql/internal/migrate"
 
 	"github.com/dolthub/go-mysql-server/sql"
 )
@@ -267,7 +267,7 @@ func TestEngineIsLockedDown(t *testing.T) {
 
 			// La sesión interna debe apuntar al directorio aislado.
 			res, _, err := s.Query("SELECT @@secure_file_priv", 10)
-			if err != nil || !strings.Contains(fmt.Sprint(res.Rows[0][0]), "access-tool-sandbox") {
+			if err != nil || !strings.Contains(fmt.Sprint(res.Rows[0][0]), "accesql-sandbox") {
 				t.Fatalf("secure_file_priv de la sesión interna = %v (%v)", res, err)
 			}
 
@@ -300,7 +300,7 @@ func TestEngineIsLockedDown(t *testing.T) {
 			} {
 				s.Query(q, 10)
 			}
-			if res, _, err := s.Query("SELECT @@secure_file_priv", 10); err != nil || !strings.Contains(fmt.Sprint(res.Rows[0][0]), "access-tool-sandbox") {
+			if res, _, err := s.Query("SELECT @@secure_file_priv", 10); err != nil || !strings.Contains(fmt.Sprint(res.Rows[0][0]), "accesql-sandbox") {
 				t.Errorf("secure_file_priv cambió: %v (%v)", res, err)
 			}
 			if res, _, err := s.Query("SELECT COUNT(*) FROM mysql.user WHERE User = 'hacker'", 10); err == nil && res.Rows[0][0] != int64(0) {

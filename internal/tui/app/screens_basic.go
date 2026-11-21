@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"access2mysql/internal/session"
-	"access2mysql/internal/web"
+	"accesql/internal/session"
+	"accesql/internal/web"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"

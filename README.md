@@ -115,27 +115,27 @@ código fuente.
 compilador de C.
 
 ```bash
-git clone https://github.com/mdev-repos/access2mysql_golang.git
-cd access2mysql_golang
+git clone https://github.com/mdev-repos/accesql.git
+cd accesql
 
 # Linux
-CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/access-tool ./cmd/access-tool
+CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/accesql ./cmd/accesql
 
 # Windows (también desde Linux)
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/access-tool.exe ./cmd/access-tool
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/accesql.exe ./cmd/accesql
 ```
 
 > En Windows el ejecutable compila, pero todavía no se probó en una máquina Windows real.
 
 ## Cómo se usa
 
-El ejecutable se llama `access-tool`. Elegí la forma que te convenga.
+El ejecutable se llama `accesql`. Elegí la forma que te convenga.
 
 ### 1. Con el menú de la terminal
 
 ```bash
-access-tool                    # o doble clic en el ejecutable
-access-tool -f datos.accdb     # con la base ya elegida
+accesql                    # o doble clic en el ejecutable
+accesql -f datos.accdb     # con la base ya elegida
 ```
 
 Recorré las opciones con `↑`/`↓`, `Enter` para elegir y `Esc` para volver.
@@ -144,7 +144,7 @@ Necesita una terminal de al menos 80×24.
 ### 2. Con la interfaz gráfica
 
 ```bash
-access-tool web --open
+accesql web --open
 ```
 
 Se abre el navegador con la página. El programa imprime un enlace con un token (`…/#t=…`): es la llave de
@@ -154,13 +154,13 @@ acceso, tratalo como una contraseña. También se puede abrir desde el menú de 
 ### 3. Como servidor MySQL para otras aplicaciones
 
 ```bash
-export ACCESS_TOOL_PASSWORD='una-clave-larga'
-access-tool serve --file datos.accdb --port 3306
+export ACCESQL_PASSWORD='una-clave-larga'
+accesql serve --file datos.accdb --port 3306
 ```
 
 ```php
 $pdo = new PDO('mysql:host=127.0.0.1;port=3306;dbname=access;charset=utf8mb4',
-               'access', getenv('ACCESS_TOOL_PASSWORD'));
+               'access', getenv('ACCESQL_PASSWORD'));
 $filas = $pdo->query('SELECT * FROM Clientes LIMIT 10')->fetchAll(PDO::FETCH_ASSOC);
 echo json_encode($filas);
 ```
@@ -169,11 +169,11 @@ echo json_encode($filas);
 
 ```bash
 # Una tabla, o todas, como JSON
-access-tool dump --file datos.accdb --table Products
-access-tool dump --file datos.accdb --out salida/
+accesql dump --file datos.accdb --table Products
+accesql dump --file datos.accdb --out salida/
 
 # Una consulta SQL (dialecto MySQL)
-access-tool query -f datos.accdb -q 'SELECT COUNT(*) AS clientes FROM Customers'
+accesql query -f datos.accdb -q 'SELECT COUNT(*) AS clientes FROM Customers'
 ```
 
 ### Migrar a MySQL, paso a paso

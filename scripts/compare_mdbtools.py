@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Contrasta `access-tool dump` contra `mdb-json` (mdbtools) para un archivo.
+"""Contrasta `accesql dump` contra `mdb-json` (mdbtools) para un archivo.
 
-Uso: python3 -I scripts/compare_mdbtools.py bin/access-tool testdb/Northwind.accdb
+Uso: python3 -I scripts/compare_mdbtools.py bin/accesql testdb/Northwind.accdb
 
 Herramienta de verificación, no forma parte del programa. Reglas de
 comparación:
@@ -49,11 +49,11 @@ for t in tables:
     ours = [clean(r) for r in ours_all.get(t, [])]
     diffs = []
     if len(ref) != len(ours):
-        diffs.append(f"  filas: mdb-json={len(ref)} access-tool={len(ours)}")
+        diffs.append(f"  filas: mdb-json={len(ref)} accesql={len(ours)}")
     for i, (r, o) in enumerate(zip(ref, ours)):
         for k in sorted(set(r) | set(o)):
             if k not in r or k not in o or not same(r[k], o[k]):
-                diffs.append(f"  fila {i} col {k!r}: mdb-json={r.get(k, '<ausente>')!r} access-tool={o.get(k, '<ausente>')!r}")
+                diffs.append(f"  fila {i} col {k!r}: mdb-json={r.get(k, '<ausente>')!r} accesql={o.get(k, '<ausente>')!r}")
     total_rows += len(ref)
     total_diffs += len(diffs)
     print(f"{'OK  ' if not diffs else 'DIFF'} {t}: {len(ref)} filas")

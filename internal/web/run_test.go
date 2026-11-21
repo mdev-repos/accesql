@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"access2mysql/internal/session"
+	"accesql/internal/session"
 )
 
 func get(t *testing.T, url, token string) int {

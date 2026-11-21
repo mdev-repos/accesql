@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"access2mysql/internal/session"
-	"access2mysql/internal/web"
+	"accesql/internal/session"
+	"accesql/internal/web"
 
 	"github.com/spf13/cobra"
 )
@@ -33,8 +33,8 @@ El archivo se elige desde la propia página; con -f queda preseleccionado.
 
 Por seguridad escucha solo en 127.0.0.1, exige un token aleatorio (va en el
 enlace que se imprime al iniciar) y la imagen es de solo lectura.`,
-		Example: `  access-tool web --open
-  access-tool web -f datos.accdb --open`,
+		Example: `  accesql web --open
+  accesql web -f datos.accdb --open`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			sess := session.New()
 			defer sess.Close()

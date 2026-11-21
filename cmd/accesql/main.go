@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"access2mysql/internal/cli"
+	"accesql/internal/cli"
 )
 
 func main() {

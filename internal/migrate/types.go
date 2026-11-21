@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"access2mysql/internal/engine"
+	"accesql/internal/engine"
 )
 
 // mysqlType traduce el tipo de una columna de Access al tipo de MySQL con el

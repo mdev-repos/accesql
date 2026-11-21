@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"access2mysql/internal/access"
+	"accesql/internal/access"
 
 	"github.com/dolthub/go-mysql-server/sql"
 	gtypes "github.com/dolthub/go-mysql-server/sql/types"

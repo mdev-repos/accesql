@@ -1,8 +1,8 @@
 <?php
-// Prueba de humo de `access-tool serve` con los drivers PHP reales (PDO y mysqli).
+// Prueba de humo de `accesql serve` con los drivers PHP reales (PDO y mysqli).
 //
 // Requiere php-cli + php-mysql y un servidor corriendo con Northwind.MDB:
-//   ACCESS_TOOL_PASSWORD=secreta ./bin/access-tool serve -f testdb/Northwind.MDB -p 3307 &
+//   ACCESQL_PASSWORD=secreta ./bin/accesql serve -f testdb/Northwind.MDB -p 3307 &
 //   php scripts/php_smoke_test.php 127.0.0.1 3307 access secreta
 //
 // Sale con código 1 si alguna comprobación falla.

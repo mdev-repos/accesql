@@ -9,9 +9,9 @@ import (
 	"strings"
 	"unicode"
 
-	"access2mysql/internal/access"
-	"access2mysql/internal/engine"
-	"access2mysql/internal/export"
+	"accesql/internal/access"
+	"accesql/internal/engine"
+	"accesql/internal/export"
 
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"

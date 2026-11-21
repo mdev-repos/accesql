@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"access2mysql/internal/version"
+	"accesql/internal/version"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

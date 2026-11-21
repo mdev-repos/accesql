@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"access2mysql/internal/session"
+	"accesql/internal/session"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

@@ -11,8 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	"access2mysql/internal/access"
-	"access2mysql/internal/engine"
+	"accesql/internal/access"
+	"accesql/internal/engine"
 
 	"github.com/spf13/cobra"
 )
@@ -20,7 +20,7 @@ import (
 // passwordEnv es la variable de entorno alternativa al flag --password. Es
 // preferible porque los argumentos de un proceso son visibles para otros
 // usuarios del sistema (ps), las variables de entorno no tanto.
-const passwordEnv = "ACCESS_TOOL_PASSWORD"
+const passwordEnv = "ACCESQL_PASSWORD"
 
 func newServeCmd() *cobra.Command {
 	var (
@@ -45,7 +45,7 @@ mientras recarga, las consultas se pausan (no se duplica la memoria).
 
 Por seguridad escucha solo en 127.0.0.1 y exige usuario y contraseña. La
 contraseña se pasa con --password o, mejor, con la variable ` + passwordEnv + `.`,
-		Example: `  ` + passwordEnv + `=secreta access-tool serve -f datos.accdb --port 3307
+		Example: `  ` + passwordEnv + `=secreta accesql serve -f datos.accdb --port 3307
   mysql -h 127.0.0.1 -P 3307 -u access -psecreta access`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if password == "" {

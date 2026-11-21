@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"access2mysql/internal/access"
+	"accesql/internal/access"
 
 	sqle "github.com/dolthub/go-mysql-server"
 	"github.com/dolthub/go-mysql-server/memory"

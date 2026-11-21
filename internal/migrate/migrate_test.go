@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"access2mysql/internal/access"
-	"access2mysql/internal/engine"
+	"accesql/internal/access"
+	"accesql/internal/engine"
 )
 
 type fakeSrc struct {

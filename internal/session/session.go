@@ -21,8 +21,8 @@ import (
 	"sync"
 	"time"
 
-	"access2mysql/internal/access"
-	"access2mysql/internal/engine"
+	"accesql/internal/access"
+	"accesql/internal/engine"
 )
 
 // dbNameRe valida el nombre de la base que ven los clientes MySQL.

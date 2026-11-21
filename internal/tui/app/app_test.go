@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"access2mysql/internal/session"
+	"accesql/internal/session"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

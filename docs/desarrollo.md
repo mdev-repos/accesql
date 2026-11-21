@@ -7,22 +7,22 @@ No hace falta compilador de C: todo es Go puro (`CGO_ENABLED=0`).
 
 ```bash
 # Linux
-CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/access-tool ./cmd/access-tool
+CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/accesql ./cmd/accesql
 
 # Windows, desde Linux
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/access-tool.exe ./cmd/access-tool
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/accesql.exe ./cmd/accesql
 ```
 
 La versión que muestran las interfaces y los scripts se puede fijar al compilar:
 
 ```bash
-go build -ldflags "-X access2mysql/internal/version.Version=0.2.0" ./cmd/access-tool
+go build -ldflags "-X accesql/internal/version.Version=0.2.0" ./cmd/accesql
 ```
 
 ## Estructura del proyecto
 
 ```text
-cmd/access-tool/     punto de entrada (main), sin lógica
+cmd/accesql/     punto de entrada (main), sin lógica
 internal/cli/        comandos cobra (raíz = menú interactivo, dump, query, serve, web)
 internal/access/     lectura de Access (envuelve mdbgo): tablas, tipos y relaciones
 internal/engine/     motor SQL en memoria (go-mysql-server) cargado desde Access; servidor MySQL
@@ -61,7 +61,7 @@ CGO_ENABLED=1 go test -race ./internal/session ./internal/web ./internal/tui/app
 ACCESQL_MYSQL_ARGS="--socket=/tmp/x.sock -uroot" go test ./internal/session -run RealMySQL -v
 
 # Comparar `dump` contra mdbtools (requiere mdbtools y Python 3)
-python3 -I scripts/compare_mdbtools.py bin/access-tool testdb/Northwind.accdb
+python3 -I scripts/compare_mdbtools.py bin/accesql testdb/Northwind.accdb
 
 # Probar `serve` con PHP real (con `serve` corriendo en el puerto 3307)
 php scripts/php_smoke_test.php 127.0.0.1 3307 access secreta

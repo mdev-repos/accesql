@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"access2mysql/internal/session"
+	"accesql/internal/session"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"

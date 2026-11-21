@@ -17,7 +17,7 @@ equipo. Por eso se diseñó con varias defensas. Esta página resume el modelo y
 ## Servidor MySQL (`serve` y la opción de la interfaz)
 
 - Escucha solo en `127.0.0.1` por defecto y exige **usuario y contraseña**. Sin contraseña no arranca.
-- Con `serve`, la contraseña se pasa por la variable `ACCESS_TOOL_PASSWORD`, mejor que `--password`
+- Con `serve`, la contraseña se pasa por la variable `ACCESQL_PASSWORD`, mejor que `--password`
   (que queda visible en la lista de procesos).
 - Al detener el servidor se **borra su usuario**: reiniciarlo con otra clave no deja valer la anterior.
 - **No hay cifrado (TLS).** Si las aplicaciones están en otra máquina, no uses `--host 0.0.0.0` a través

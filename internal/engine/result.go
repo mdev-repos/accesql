@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"access2mysql/internal/jsonout"
+	"accesql/internal/jsonout"
 
 	"github.com/shopspring/decimal"
 )

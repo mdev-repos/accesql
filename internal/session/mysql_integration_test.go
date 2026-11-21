@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"access2mysql/internal/migrate"
+	"accesql/internal/migrate"
 )
 
 // Esta prueba ejecuta los scripts generados contra un servidor MySQL/MariaDB

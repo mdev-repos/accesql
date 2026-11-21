@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"time"
 
-	"access2mysql/internal/session"
+	"accesql/internal/session"
 )
 
 // Running es un servidor web en marcha. Lo crea Start y lo usan tanto el

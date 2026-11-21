@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"access2mysql/internal/access"
-	"access2mysql/internal/migrate"
+	"accesql/internal/access"
+	"accesql/internal/migrate"
 )
 
 // SchemaColumn es una columna del diagrama, con sus marcas de clave.

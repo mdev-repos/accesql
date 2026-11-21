@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"access2mysql/internal/jsonout"
+	"accesql/internal/jsonout"
 )
 
 func TestLiteral(t *testing.T) {

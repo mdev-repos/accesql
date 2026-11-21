@@ -7,7 +7,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"access2mysql/internal/access"
+	"accesql/internal/access"
 )
 
 // settleTime es cuánto tiempo debe llevar el archivo sin modificarse antes de

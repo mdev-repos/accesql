@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"access2mysql/internal/session"
+	"accesql/internal/session"
 
 	"github.com/dolthub/go-mysql-server/sql"
 )
