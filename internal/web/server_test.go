@@ -3,7 +3,6 @@ package web
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -718,33 +717,6 @@ func TestScriptAdd(t *testing.T) {
 		if rec := call(h, "POST", "/api/script/add", b); rec.Code != http.StatusBadRequest {
 			t.Errorf("%s: %d %s", name, rec.Code, rec.Body.String())
 		}
-	}
-}
-
-func TestPreviewBufferCutsAtLineBoundary(t *testing.T) {
-	var p previewBuf
-	line := strings.Repeat("x", 99) + "\n"
-	var err error
-	for i := 0; i < 2000 && err == nil; i++ {
-		_, err = p.Write([]byte(line))
-	}
-	if !errors.Is(err, errPreviewFull) || !p.full {
-		t.Fatalf("debería llenarse y cortar: err=%v full=%v", err, p.full)
-	}
-	txt := p.text()
-	if len(txt) > previewBytes || !strings.HasSuffix(txt, "\n") || strings.Contains(txt, "xx\n"+strings.Repeat("x", 10)+"\n"+"y") {
-		t.Errorf("la vista previa debe terminar en un salto de línea completo (%d bytes)", len(txt))
-	}
-	for _, l := range strings.Split(strings.TrimSuffix(txt, "\n"), "\n") {
-		if len(l) != 99 {
-			t.Fatalf("hay una línea cortada a la mitad: %d caracteres", len(l))
-		}
-	}
-
-	var small previewBuf
-	small.Write([]byte("poco\n"))
-	if small.full || small.text() != "poco\n" {
-		t.Errorf("un script chico debe salir completo: %+v", small)
 	}
 }
 

@@ -137,18 +137,6 @@ func loadTable(ctx *sql.Context, db *memory.Database, t *access.Table) error {
 	return ins.Close(ctx)
 }
 
-// Tables devuelve los nombres de las tablas cargadas, ordenados.
-func (e *Engine) Tables() ([]string, error) {
-	e.mu.RLock()
-	defer e.mu.RUnlock()
-	names, err := e.db.GetTableNames(e.ctx)
-	if err != nil {
-		return nil, err
-	}
-	sort.Strings(names)
-	return names, nil
-}
-
 // Query ejecuta una sentencia SQL (dialecto MySQL) y devuelve el resultado.
 func (e *Engine) Query(q string) (*Result, error) {
 	res, _, err := e.QueryN(q, 0)

@@ -13,9 +13,6 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
-// Version se mostrará bajo el logo. Más adelante se inyecta al compilar.
-const Version = "0.1.0"
-
 // Paleta: azul en barras y selección, dorado en detalles, grises neutros.
 var (
 	colBlue  = lipgloss.Color("#2a5a94")
@@ -98,4 +95,29 @@ func check(on bool, label string) string {
 		return "[x] " + label
 	}
 	return "[ ] " + label
+}
+
+// wrap parte un texto en líneas de hasta w columnas (cortando entre palabras) y
+// deja como máximo n; si no entra, la última termina en "…".
+func wrap(s string, w, n int) []string {
+	var lines []string
+	cur := ""
+	for _, word := range strings.Fields(s) {
+		switch {
+		case cur == "":
+			cur = word
+		case lipgloss.Width(cur)+1+lipgloss.Width(word) <= w:
+			cur += " " + word
+		default:
+			lines = append(lines, cur)
+			cur = word
+		}
+	}
+	if cur != "" {
+		lines = append(lines, cur)
+	}
+	if len(lines) > n {
+		lines = append(lines[:n-1], clip(strings.Join(lines[n-1:], " "), w))
+	}
+	return lines
 }

@@ -1,9 +1,15 @@
 package app
 
 import (
+	"context"
 	"fmt"
-	"regexp"
+	"io"
+	"os"
 	"strings"
+
+	"access2mysql/internal/engine"
+	"access2mysql/internal/migrate"
+	"access2mysql/internal/session"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -12,36 +18,59 @@ import (
 func newFieldInput(val string, w int) textinput.Model {
 	ti := textinput.New()
 	ti.Prompt = ""
-	ti.CharLimit = 64
+	ti.CharLimit = 200
 	ti.Width = w
 	ti.TextStyle = sField
 	ti.SetValue(val)
 	return ti
 }
 
+// previewCmd genera un script en segundo plano y entrega la vista previa. gen
+// escribe el script completo en el io.Writer que recibe; el mismo gen se usa
+// después para guardarlo entero en un archivo.
+func previewCmd(id int, name string, gen func(w io.Writer) error) tea.Cmd {
+	return func() tea.Msg {
+		text, truncated, err := session.Preview(previewBytes, gen)
+		save := func(path string) error {
+			f, err := os.Create(path)
+			if err != nil {
+				return err
+			}
+			err = gen(f)
+			if cerr := f.Close(); err == nil {
+				err = cerr
+			}
+			return err
+		}
+		return scriptReady{id: id, text: text, truncated: truncated, err: err, name: name, save: save}
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Crear una base de datos nueva
 // ---------------------------------------------------------------------------
 
-// Filas: 0 nombre · 1 incluir datos · 2 borrar si existe · 3 generar · 4 volver.
+// Filas: 0 nombre · 1 incluir datos · 2 relaciones · 3 borrar si existe ·
+// 4 generar · 5 volver.
 type convertNew struct {
+	id       int
 	name     textinput.Model
 	withData bool
+	fk       bool
 	drop     bool
 	focus    int
+	busy     bool
+	err      string
 }
 
-var nonIdent = regexp.MustCompile(`[^a-z0-9_]+`)
+const newRows = 6
 
 func newConvertNew(a *App) *convertNew {
-	base := strings.TrimSuffix(baseName(a.st.filePath), ".accdb")
-	base = strings.TrimSuffix(base, ".mdb")
-	def := strings.Trim(nonIdent.ReplaceAllString(strings.ToLower(base), "_"), "_")
+	def := a.sess.State().Suggested
 	if def == "" {
 		def = "mi_base"
 	}
-	s := &convertNew{name: newFieldInput(def, 28), withData: true}
-	return s
+	return &convertNew{id: nextID(), name: newFieldInput(def, 28), withData: true, fk: true}
 }
 
 // init da el foco al campo del nombre apenas se abre la pantalla.
@@ -51,7 +80,7 @@ func (s *convertNew) crumb() string { return "Convertir a MySQL › Base nueva" 
 func (s *convertNew) help() string  { return "↑/↓ mover · Enter/Espacio elegir · Esc volver" }
 
 func (s *convertNew) setFocus(i int) tea.Cmd {
-	s.focus = (i + 5) % 5
+	s.focus = (i + newRows) % newRows
 	s.name.Blur()
 	if s.focus == 0 {
 		return s.name.Focus()
@@ -60,16 +89,34 @@ func (s *convertNew) setFocus(i int) tea.Cmd {
 }
 
 func (s *convertNew) update(a *App, msg tea.Msg) tea.Cmd {
-	k, ok := msg.(tea.KeyMsg)
-	if !ok {
-		if s.focus == 0 {
-			var cmd tea.Cmd
-			s.name, cmd = s.name.Update(msg)
-			return cmd
+	switch m := msg.(type) {
+	case scriptReady:
+		if m.id != s.id {
+			return nil
 		}
+		s.busy = false
+		if m.err != nil {
+			s.err = oneLine(m.err.Error())
+			return nil
+		}
+		s.err = ""
+		return a.push(newScriptScreen(m))
+	case tea.KeyMsg:
+		return s.key(a, m)
+	}
+	if s.focus == 0 {
+		var cmd tea.Cmd
+		s.name, cmd = s.name.Update(msg)
+		return cmd
+	}
+	return nil
+}
+
+func (s *convertNew) key(a *App, k tea.KeyMsg) tea.Cmd {
+	key := k.String()
+	if s.busy {
 		return nil
 	}
-	key := k.String()
 	switch {
 	case key == "esc":
 		a.pop()
@@ -82,7 +129,7 @@ func (s *convertNew) update(a *App, msg tea.Msg) tea.Cmd {
 		return s.setFocus(1)
 	case s.focus == 0:
 		var cmd tea.Cmd
-		s.name, cmd = s.name.Update(msg)
+		s.name, cmd = s.name.Update(k)
 		return cmd
 	case isUp(key):
 		return s.setFocus(s.focus - 1)
@@ -93,39 +140,59 @@ func (s *convertNew) update(a *App, msg tea.Msg) tea.Cmd {
 		case 1:
 			s.withData = !s.withData
 		case 2:
-			s.drop = !s.drop
+			s.fk = !s.fk
 		case 3:
-			name := strings.TrimSpace(s.name.Value())
-			if !dbNameRe.MatchString(name) {
-				a.alert("El nombre solo puede tener letras, números y _.")
-				return nil
-			}
-			return a.push(newScriptScreen(mockScriptNew(baseName(a.st.filePath), name, s.withData, s.drop)))
+			s.drop = !s.drop
 		case 4:
+			return s.generate(a)
+		case 5:
 			a.pop()
 		}
 	}
 	return nil
 }
 
+func (s *convertNew) generate(a *App) tea.Cmd {
+	name := strings.TrimSpace(s.name.Value())
+	if !migrate.ValidDatabaseName(name) {
+		s.err = "El nombre solo puede tener letras, números, _ o $ (hasta 64 caracteres)."
+		return nil
+	}
+	s.busy, s.err = true, ""
+	opts := migrate.NewOptions{Database: name, Data: s.withData, ForeignKeys: s.fk, DropDatabase: s.drop}
+	sess := a.sess
+	return previewCmd(s.id, name+".sql", func(w io.Writer) error {
+		_, err := sess.ScriptNew(context.Background(), w, opts)
+		return err
+	})
+}
+
 func (s *convertNew) view(a *App, cw int) string {
 	label := padRight("Nombre de la base", 19)
-	var nameRow string
+	nameRow := "   " + label + " " + s.name.View()
 	if s.focus == 0 {
 		nameRow = sSelMark.Render(" ▸ ") + sSel.Render(label) + " " + s.name.View()
-	} else {
-		nameRow = "   " + label + " " + s.name.View()
+	}
+	gen := "Generar script SQL"
+	if s.busy {
+		gen = "Generando…"
+	}
+	errLine := ""
+	if s.err != "" {
+		errLine = "   " + sErr.Render("✖ "+clip(s.err, cw-6))
 	}
 	return strings.Join([]string{
 		nameRow,
 		"",
 		row(check(s.withData, "Incluir los datos"), "", s.focus == 1, false, cw),
 		"     " + sMuted.Render("Si lo desmarcás, solo se crea la estructura de las tablas."),
-		row(check(s.drop, "Borrar la base si ya existe"), "", s.focus == 2, false, cw),
+		row(check(s.fk, "Incluir las relaciones"), "", s.focus == 2, false, cw),
+		"     " + sMuted.Render("FOREIGN KEY de las relaciones con integridad referencial en Access."),
+		row(check(s.drop, "Borrar la base si ya existe"), "", s.focus == 3, false, cw),
 		"     " + sMuted.Render("Agrega DROP DATABASE IF EXISTS. Cuidado: elimina lo que haya."),
-		"",
-		row("Generar script SQL", "", s.focus == 3, false, cw),
-		row("Volver", "", s.focus == 4, false, cw),
+		errLine,
+		row(gen, "", s.focus == 4, false, cw),
+		row("Volver", "", s.focus == 5, false, cw),
 	}, "\n")
 }
 
@@ -133,44 +200,58 @@ func (s *convertNew) view(a *App, cw int) string {
 // Agregar datos a tablas que ya existen
 // ---------------------------------------------------------------------------
 
-// Filas planas: tablas (0..n-1), luego duplicados, transacción, generar, volver.
+// Filas planas: las tablas (0..n-1), y después duplicados, transacción,
+// generar y volver.
 type convertAdd struct {
-	sel     []bool
-	dst     []string
-	dup     int
-	tx      bool
-	cur     int
-	top     int
-	editing bool
+	id     int
+	tables []engine.TableInfo
+	sel    []bool
+	dst    []string
+	cols   []string // columnas de destino, como las escribió el usuario ("" = todas)
+	dup    int
+	tx     bool
+	cur    int
+	top    int
+	busy   bool
+	err    string
+
+	editing int // 0 no · 1 destino · 2 columnas
 	edit    textinput.Model
 }
 
 const addRows = 11
 
-func newConvertAdd() *convertAdd {
-	n := len(mockTables)
-	s := &convertAdd{sel: make([]bool, n), dst: make([]string, n), tx: true}
-	for i, t := range mockTables {
-		s.sel[i] = true
-		s.dst[i] = t.name
+var dupLabels = []string{"Omitirlo (no cambia nada)", "Actualizarlo con los datos de Access", "Reemplazarlo por completo"}
+
+func newConvertAdd(a *App) (*convertAdd, error) {
+	tables, err := a.sess.Tables()
+	if err != nil {
+		return nil, err
 	}
-	s.edit = newFieldInput("", 26)
-	return s
+	s := &convertAdd{
+		id: nextID(), tables: tables, tx: true,
+		sel: make([]bool, len(tables)), dst: make([]string, len(tables)), cols: make([]string, len(tables)),
+	}
+	for i, t := range tables {
+		s.sel[i], s.dst[i] = true, t.Name
+	}
+	s.edit = newFieldInput("", 40)
+	return s, nil
 }
 
 func (s *convertAdd) crumb() string { return "Convertir a MySQL › Agregar a tablas existentes" }
 func (s *convertAdd) help() string {
-	if s.editing {
+	if s.editing != 0 {
 		return "Enter aceptar · Esc cancelar"
 	}
-	return "↑/↓ mover · Espacio marcar · e renombrar · a/n todas/ninguna · Esc volver"
+	return "Espacio marcar · e destino · c columnas · a/n todas/ninguna · Esc volver"
 }
 
-func (s *convertAdd) total() int   { return len(mockTables) + 4 }
-func (s *convertAdd) rowDup() int  { return len(mockTables) }
-func (s *convertAdd) rowTx() int   { return len(mockTables) + 1 }
-func (s *convertAdd) rowGen() int  { return len(mockTables) + 2 }
-func (s *convertAdd) rowBack() int { return len(mockTables) + 3 }
+func (s *convertAdd) total() int   { return len(s.tables) + 4 }
+func (s *convertAdd) rowDup() int  { return len(s.tables) }
+func (s *convertAdd) rowTx() int   { return len(s.tables) + 1 }
+func (s *convertAdd) rowGen() int  { return len(s.tables) + 2 }
+func (s *convertAdd) rowBack() int { return len(s.tables) + 3 }
 
 func (s *convertAdd) move(d int) {
 	s.cur = (s.cur + d + s.total()) % s.total()
@@ -180,9 +261,7 @@ func (s *convertAdd) move(d int) {
 	if s.cur >= s.top+addRows {
 		s.top = s.cur - addRows + 1
 	}
-	if s.cur < addRows && s.top > 0 && s.cur < s.top {
-		s.top = 0
-	}
+	s.top = max(0, s.top)
 }
 
 func (s *convertAdd) markAll(on bool) {
@@ -191,36 +270,68 @@ func (s *convertAdd) markAll(on bool) {
 	}
 }
 
-func (s *convertAdd) update(a *App, msg tea.Msg) tea.Cmd {
-	k, ok := msg.(tea.KeyMsg)
-	if !ok {
-		if s.editing {
-			var cmd tea.Cmd
-			s.edit, cmd = s.edit.Update(msg)
-			return cmd
+func splitColumns(text string) []string {
+	var out []string
+	for _, c := range strings.FieldsFunc(text, func(r rune) bool { return r == ',' || r == ';' || r == '\n' }) {
+		if c = strings.TrimSpace(c); c != "" {
+			out = append(out, c)
 		}
+	}
+	return out
+}
+
+func (s *convertAdd) update(a *App, msg tea.Msg) tea.Cmd {
+	switch m := msg.(type) {
+	case scriptReady:
+		if m.id != s.id {
+			return nil
+		}
+		s.busy = false
+		if m.err != nil {
+			s.err = oneLine(m.err.Error())
+			return nil
+		}
+		s.err = ""
+		return a.push(newScriptScreen(m))
+	case tea.KeyMsg:
+		return s.key(a, m)
+	}
+	if s.editing != 0 {
+		var cmd tea.Cmd
+		s.edit, cmd = s.edit.Update(msg)
+		return cmd
+	}
+	return nil
+}
+
+func (s *convertAdd) key(a *App, k tea.KeyMsg) tea.Cmd {
+	key := k.String()
+	if s.busy {
 		return nil
 	}
-	key := k.String()
-
-	if s.editing {
+	if s.editing != 0 {
 		switch key {
 		case "enter":
-			s.dst[s.cur] = strings.TrimSpace(s.edit.Value())
-			s.editing = false
+			v := strings.TrimSpace(s.edit.Value())
+			if s.editing == 1 {
+				s.dst[s.cur] = v
+			} else {
+				s.cols[s.cur] = v
+			}
+			s.editing = 0
 			s.edit.Blur()
 		case "esc":
-			s.editing = false
+			s.editing = 0
 			s.edit.Blur()
 		default:
 			var cmd tea.Cmd
-			s.edit, cmd = s.edit.Update(msg)
+			s.edit, cmd = s.edit.Update(k)
 			return cmd
 		}
 		return nil
 	}
 
-	n := len(mockTables)
+	n := len(s.tables)
 	switch {
 	case key == "esc":
 		a.pop()
@@ -228,46 +339,71 @@ func (s *convertAdd) update(a *App, msg tea.Msg) tea.Cmd {
 		s.move(-1)
 	case isDown(key):
 		s.move(1)
+	case key == "pgup":
+		s.move(-addRows)
+	case key == "pgdown":
+		s.move(addRows)
 	case key == "a":
 		s.markAll(true)
 	case key == "n":
 		s.markAll(false)
 	case key == "e" && s.cur < n:
 		s.edit.SetValue(s.dst[s.cur])
-		s.editing = true
+		s.editing = 1
+		return s.edit.Focus()
+	case key == "c" && s.cur < n:
+		s.edit.SetValue(s.cols[s.cur])
+		s.editing = 2
 		return s.edit.Focus()
 	case (key == "left" || key == "right" || key == "h" || key == "l") && s.cur == s.rowDup():
 		d := 1
 		if key == "left" || key == "h" {
 			d = -1
 		}
-		s.dup = (s.dup + d + len(dupModes)) % len(dupModes)
+		s.dup = (s.dup + d + len(dupLabels)) % len(dupLabels)
 	case key == "enter" || key == " ":
 		switch {
 		case s.cur < n:
 			s.sel[s.cur] = !s.sel[s.cur]
 		case s.cur == s.rowDup():
-			s.dup = (s.dup + 1) % len(dupModes)
+			s.dup = (s.dup + 1) % len(dupLabels)
 		case s.cur == s.rowTx():
 			s.tx = !s.tx
 		case s.cur == s.rowGen():
-			var src, dst []string
-			for i, t := range mockTables {
-				if s.sel[i] {
-					src = append(src, t.name)
-					dst = append(dst, s.dst[i])
-				}
-			}
-			if len(src) == 0 {
-				a.alert("Marcá al menos una tabla para migrar.")
-				return nil
-			}
-			return a.push(newScriptScreen(mockScriptAdd(baseName(a.st.filePath), src, dst, s.dup, s.tx)))
+			return s.generate(a)
 		case s.cur == s.rowBack():
 			a.pop()
 		}
 	}
 	return nil
+}
+
+func (s *convertAdd) generate(a *App) tea.Cmd {
+	var pairs []migrate.TablePair
+	for i, t := range s.tables {
+		if s.sel[i] {
+			pairs = append(pairs, migrate.TablePair{Source: t.Name, Target: s.dst[i], TargetColumns: splitColumns(s.cols[i])})
+		}
+	}
+	if len(pairs) == 0 {
+		a.alert("Marcá al menos una tabla para migrar.")
+		return nil
+	}
+	s.busy, s.err = true, ""
+	opts := migrate.AddOptions{Tables: pairs, OnDuplicate: migrate.Duplicate(s.dup), Transaction: s.tx}
+	sess := a.sess
+	name := strings.TrimSuffix(baseName(a.sess.State().File), "."+extOf(a.sess.State().File)) + "-insert.sql"
+	return previewCmd(s.id, name, func(w io.Writer) error {
+		_, err := sess.ScriptAdd(context.Background(), w, opts)
+		return err
+	})
+}
+
+func extOf(path string) string {
+	if i := strings.LastIndexByte(path, '.'); i >= 0 {
+		return path[i+1:]
+	}
+	return ""
 }
 
 func (s *convertAdd) view(a *App, cw int) string {
@@ -277,36 +413,45 @@ func (s *convertAdd) view(a *App, cw int) string {
 			count++
 		}
 	}
-	L := []string{
-		sMuted.Render(fmt.Sprintf("Las columnas se emparejan por nombre. %d de %d tablas marcadas.", count, len(mockTables))),
-	}
+	head := sMuted.Render(fmt.Sprintf("%d de %d tablas marcadas. Si la de MySQL tiene menos columnas, usá c.", count, len(s.tables)))
+	L := []string{clip(head, cw)}
 	end := min(s.total(), s.top+addRows)
 	for i := s.top; i < end; i++ {
 		sel := i == s.cur
 		switch {
-		case i < len(mockTables):
-			dst := s.dst[i]
-			if s.editing && sel {
-				L = append(L, sSelMark.Render(" ▸ ")+sSel.Render(padRight(check(s.sel[i], mockTables[i].name+" →"), cw-3-fieldW-1))+" "+s.edit.View())
+		case i < len(s.tables):
+			t := s.tables[i]
+			if s.editing != 0 && sel {
+				what := "→"
+				if s.editing == 2 {
+					what = "columnas:"
+				}
+				L = append(L, sSelMark.Render(" ▸ ")+sSel.Render(clip(check(s.sel[i], t.Name)+" "+what, 28))+" "+s.edit.View())
 				continue
 			}
-			label := check(s.sel[i], mockTables[i].name)
-			hint := ""
-			if dst != mockTables[i].name {
-				hint = "→ " + dst
-			} else {
-				hint = "→ " + dst
+			hint := "→ " + s.dst[i]
+			if c := splitColumns(s.cols[i]); len(c) > 0 {
+				hint += fmt.Sprintf("  (%d col.)", len(c))
 			}
-			L = append(L, row(label, hint, sel, false, cw))
+			L = append(L, row(check(s.sel[i], t.Name), hint, sel, false, cw))
 		case i == s.rowDup():
-			L = append(L, row("Si el registro ya existe:  ‹ "+dupModes[s.dup]+" ›", "", sel, false, cw))
+			L = append(L, row("Si el registro ya existe:  ‹ "+dupLabels[s.dup]+" ›", "", sel, false, cw))
 		case i == s.rowTx():
 			L = append(L, row(check(s.tx, "Envolver en una transacción"), "", sel, false, cw))
 		case i == s.rowGen():
-			L = append(L, row("Generar script SQL", "", sel, false, cw))
+			gen := "Generar script SQL"
+			switch {
+			case s.busy:
+				gen = "Generando…"
+			case s.err != "":
+				gen += "  ✖ " + clip(s.err, 40)
+			}
+			L = append(L, row(gen, "", sel, false, cw))
 		default:
 			L = append(L, row("Volver", "", sel, false, cw))
 		}
 	}
 	return strings.Join(L, "\n")
 }
+
+var _ = session.ErrNoImage // la pantalla depende de que haya imagen: Tables() lo informa

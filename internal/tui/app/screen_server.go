@@ -2,43 +2,52 @@ package app
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
+	"time"
+
+	"access2mysql/internal/session"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// serverScreen: formulario para "exponer" la imagen como servidor MySQL.
-// Filas: 0 casilla · 1..5 campos · 6 iniciar/detener · 7 volver.
+// serverTick hace que la pantalla se redibuje cada segundo: así se nota si el
+// servidor se detuvo solo.
+type serverTick struct{ id int }
+
+// serverScreen: formulario para exponer la imagen como servidor MySQL.
+// Filas: 0 casilla · 1..4 campos · 5 iniciar/detener · 6 volver.
 type serverScreen struct {
-	on      bool
-	running bool
-	in      [5]textinput.Model // dirección, puerto, usuario, contraseña, base
-	focus   int
-	err     string
+	id    int
+	on    bool
+	in    [4]textinput.Model // dirección, puerto, usuario, contraseña
+	focus int
+	err   string
 }
 
-var serverLabels = [5]string{"Dirección", "Puerto", "Usuario", "Contraseña", "Base"}
+var serverLabels = [4]string{"Dirección", "Puerto", "Usuario", "Contraseña"}
 
 const (
 	rowToggle = 0
-	rowAction = 6
-	rowBack   = 7
+	rowAction = 5
+	rowBack   = 6
 	fieldW    = 26
 )
 
-func newServerScreen() *serverScreen {
-	s := &serverScreen{}
-	vals := [5]string{"127.0.0.1", "3306", "access", "", "access"}
+func newServerScreen(a *App) *serverScreen {
+	s := &serverScreen{id: nextID()}
+	vals := [4]string{"127.0.0.1", "3306", "access", ""}
+	if sv := a.sess.State().Server; sv.Running { // ya está activo: se muestran sus datos
+		s.on = true
+		if h, p, err := net.SplitHostPort(sv.Address); err == nil {
+			vals[0], vals[1] = h, p
+		}
+		vals[2] = sv.User
+	}
 	for i := range s.in {
-		ti := textinput.New()
-		ti.Prompt = ""
-		ti.CharLimit = 64
-		ti.Width = fieldW
-		ti.TextStyle = sField
-		ti.PlaceholderStyle = sField.Foreground(colMuted)
-		ti.SetValue(vals[i])
+		ti := newFieldInput(vals[i], fieldW)
 		s.in[i] = ti
 	}
 	s.in[3].EchoMode = textinput.EchoPassword
@@ -47,103 +56,112 @@ func newServerScreen() *serverScreen {
 	return s
 }
 
+func (s *serverScreen) init() tea.Cmd { return s.tick() }
+
+func (s *serverScreen) tick() tea.Cmd {
+	id := s.id
+	return tea.Tick(time.Second, func(time.Time) tea.Msg { return serverTick{id} })
+}
+
 func (s *serverScreen) crumb() string { return "Servidor MySQL" }
 func (s *serverScreen) help() string {
 	return "↑/↓ mover · Enter/Espacio elegir · Esc volver"
 }
 
 // enabled dice si una fila admite foco en el estado actual.
-func (s *serverScreen) enabled(i int) bool {
+func (s *serverScreen) enabled(i int, running bool) bool {
 	switch {
 	case i == rowToggle:
-		return !s.running
-	case i >= 1 && i <= 5:
-		return s.on && !s.running
+		return !running
+	case i >= 1 && i <= 4:
+		return s.on && !running
 	case i == rowAction:
-		return s.on
+		return s.on || running
 	}
 	return true
 }
 
 func (s *serverScreen) setFocus(i int) tea.Cmd {
 	s.focus = i
-	var cmd tea.Cmd
 	for n := range s.in {
 		s.in[n].Blur()
 	}
-	if i >= 1 && i <= 5 {
-		cmd = s.in[i-1].Focus()
+	if i >= 1 && i <= 4 {
+		return s.in[i-1].Focus()
 	}
-	return cmd
+	return nil
 }
 
-func (s *serverScreen) move(d int) tea.Cmd {
-	for i := 0; i < 8; i++ {
-		s.focus = (s.focus + d + 8) % 8
-		if s.enabled(s.focus) {
+func (s *serverScreen) move(d int, running bool) tea.Cmd {
+	for i := 0; i < 7; i++ {
+		s.focus = (s.focus + d + 7) % 7
+		if s.enabled(s.focus, running) {
 			break
 		}
 	}
 	return s.setFocus(s.focus)
 }
 
-func (s *serverScreen) validate() string {
-	host := strings.TrimSpace(s.in[0].Value())
-	port, perr := strconv.Atoi(strings.TrimSpace(s.in[1].Value()))
-	switch {
-	case host == "":
-		return "Escribí la dirección."
-	case perr != nil || port < 1 || port > 65535:
-		return "El puerto debe ser un número entre 1 y 65535."
-	case strings.TrimSpace(s.in[2].Value()) == "":
-		return "Escribí el usuario."
-	case s.in[3].Value() == "":
-		return "La contraseña es obligatoria: sin ella cualquiera podría leer los datos."
-	case strings.TrimSpace(s.in[4].Value()) == "":
-		return "Escribí el nombre de la base."
+func (s *serverScreen) options() session.ServerOptions {
+	port, _ := strconv.Atoi(strings.TrimSpace(s.in[1].Value()))
+	return session.ServerOptions{
+		Host: strings.TrimSpace(s.in[0].Value()), Port: port,
+		User: strings.TrimSpace(s.in[2].Value()), Password: s.in[3].Value(),
 	}
-	return ""
 }
 
 func (s *serverScreen) update(a *App, msg tea.Msg) tea.Cmd {
-	k, ok := msg.(tea.KeyMsg)
-	if !ok {
-		// Mensajes internos (parpadeo del cursor): los necesita el campo activo.
-		if s.focus >= 1 && s.focus <= 5 {
-			var cmd tea.Cmd
-			s.in[s.focus-1], cmd = s.in[s.focus-1].Update(msg)
-			return cmd
+	running := a.sess.State().Server.Running
+	if !running && s.focus == rowAction && !s.on {
+		s.focus = rowToggle
+	}
+	switch m := msg.(type) {
+	case serverTick:
+		if m.id == s.id {
+			return s.tick()
 		}
 		return nil
+	case tea.KeyMsg:
+		return s.key(a, m, running)
 	}
+	// Mensajes internos (parpadeo del cursor): los necesita el campo activo.
+	if s.focus >= 1 && s.focus <= 4 {
+		var cmd tea.Cmd
+		s.in[s.focus-1], cmd = s.in[s.focus-1].Update(msg)
+		return cmd
+	}
+	return nil
+}
+
+func (s *serverScreen) key(a *App, k tea.KeyMsg, running bool) tea.Cmd {
 	key := k.String()
 	switch {
 	case key == "esc":
 		a.pop()
 		return nil
 	case key == "up" || key == "shift+tab":
-		return s.move(-1)
+		return s.move(-1, running)
 	case key == "down" || key == "tab":
-		return s.move(1)
+		return s.move(1, running)
 	}
-	editing := s.focus >= 1 && s.focus <= 5
+	editing := s.focus >= 1 && s.focus <= 4
 	switch {
 	case editing && key == "enter":
-		return s.move(1)
+		return s.move(1, running)
 	case editing:
 		var cmd tea.Cmd
-		s.in[s.focus-1], cmd = s.in[s.focus-1].Update(msg)
+		s.in[s.focus-1], cmd = s.in[s.focus-1].Update(k)
 		return cmd
 	case isUp(key):
-		return s.move(-1)
+		return s.move(-1, running)
 	case isDown(key):
-		return s.move(1)
+		return s.move(1, running)
 	case key == "enter" || key == " ":
 		switch s.focus {
 		case rowToggle:
 			s.on = !s.on
 		case rowAction:
-			s.startStop(a)
+			s.startStop(a, running)
 		case rowBack:
 			a.pop()
 		}
@@ -151,27 +169,30 @@ func (s *serverScreen) update(a *App, msg tea.Msg) tea.Cmd {
 	return nil
 }
 
-func (s *serverScreen) startStop(a *App) {
-	if s.running {
-		s.running = false
-		a.st.serverAddr = ""
+func (s *serverScreen) startStop(a *App, running bool) {
+	if running {
+		a.sess.StopServer()
+		s.err = ""
 		a.say("Servidor detenido.")
 		return
 	}
-	if s.err = s.validate(); s.err != "" {
+	opts := s.options()
+	if msg := session.ValidateServer(opts); msg != "" {
+		s.err = msg
 		return
 	}
-	s.running = true
-	a.st.serverAddr = fmt.Sprintf("%s:%s", strings.TrimSpace(s.in[0].Value()), strings.TrimSpace(s.in[1].Value()))
-	a.say("Servidor iniciado (simulado).")
-	s.focus = rowAction
+	if err := a.sess.StartServer(opts); err != nil {
+		s.err = oneLine(err.Error())
+		return
+	}
+	s.err = ""
+	a.say("Servidor iniciado.")
 }
 
-func (s *serverScreen) fieldRow(i int, cw int) string {
+func (s *serverScreen) fieldRow(i int, running bool) string {
 	label := padRight(serverLabels[i], 12)
-	foc := s.focus == i+1
 	var val string
-	if s.enabled(i + 1) {
+	if s.enabled(i+1, running) {
 		val = s.in[i].View()
 	} else {
 		shown := s.in[i].Value()
@@ -180,16 +201,18 @@ func (s *serverScreen) fieldRow(i int, cw int) string {
 		}
 		val = sDisabled.Render(padRight(shown, fieldW+1))
 	}
-	if foc {
+	switch {
+	case s.focus == i+1:
 		return sSelMark.Render(" ▸ ") + sSel.Render(label) + " " + val
-	}
-	if !s.enabled(i + 1) {
+	case !s.enabled(i+1, running):
 		return "   " + sDisabled.Render(label) + " " + val
 	}
 	return "   " + label + " " + val
 }
 
 func (s *serverScreen) view(a *App, cw int) string {
+	st := a.sess.State()
+	running := st.Server.Running
 	hostHint := "Solo esta computadora."
 	switch strings.TrimSpace(s.in[0].Value()) {
 	case "0.0.0.0":
@@ -200,44 +223,48 @@ func (s *serverScreen) view(a *App, cw int) string {
 	}
 
 	var L []string
-	L = append(L, row(check(s.on, "Exponer la imagen como servidor MySQL"), "", s.focus == rowToggle, !s.enabled(rowToggle), cw))
+	L = append(L, row(check(s.on || running, "Exponer la imagen como servidor MySQL"), "", s.focus == rowToggle, !s.enabled(rowToggle, running), cw))
 	L = append(L, "     "+sMuted.Render("Para que PHP u otros programas se conecten como a una base MySQL común."), "")
 	for i := range s.in {
-		L = append(L, s.fieldRow(i, cw))
+		L = append(L, s.fieldRow(i, running))
 	}
+	L = append(L, "   "+sMuted.Render(padRight("Base", 12)+" ")+sTitle.Render(st.Database)+sMuted.Render("  (se elige al generar la imagen)"))
 	L = append(L, "     "+sMuted.Render(hostHint))
-	if s.err != "" {
-		L = append(L, "   "+sErr.Render("✖ "+s.err))
-	} else {
+	msg := s.err
+	if msg == "" && st.Server.Error != "" && !running {
+		msg = "El servidor se detuvo: " + oneLine(st.Server.Error)
+	}
+	if msg == "" {
 		L = append(L, "")
 	}
-	action := "Iniciar servidor"
-	if s.running {
-		action = "Detener servidor"
+	for i, l := range wrap(msg, cw-8, 2) {
+		prefix := "   "
+		if i == 0 {
+			prefix += "✖ "
+		} else {
+			prefix += "  "
+		}
+		L = append(L, sErr.Render(prefix+l))
 	}
-	L = append(L, row(action, statusHint(s), s.focus == rowAction, !s.enabled(rowAction), cw))
+	action, hint := "Iniciar servidor", ""
+	switch {
+	case running:
+		action, hint = "Detener servidor", "activo"
+	case !s.on:
+		hint = "marcá la casilla primero"
+	}
+	L = append(L, row(action, hint, s.focus == rowAction, !s.enabled(rowAction, running), cw))
 	L = append(L, row("Volver", "", s.focus == rowBack, false, cw))
 
-	if s.running {
-		host := strings.TrimSpace(s.in[0].Value())
-		if host == "0.0.0.0" {
+	if running {
+		host, port, _ := net.SplitHostPort(st.Server.Address)
+		if host == "0.0.0.0" || host == "::" {
 			host = "127.0.0.1"
 		}
-		port, user, db := strings.TrimSpace(s.in[1].Value()), strings.TrimSpace(s.in[2].Value()), strings.TrimSpace(s.in[4].Value())
 		L = append(L, "",
-			"   "+sOK.Render("● Activo")+sMuted.Render(" · conectate con:"),
-			"   "+sField.Render(padRight(fmt.Sprintf(" mysql -h %s -P %s -u %s -p %s", host, port, user, db), cw-4)),
-			"   "+sField.Render(padRight(fmt.Sprintf(" mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4", host, port, db), cw-4)))
+			"   "+sOK.Render("● Activo")+sMuted.Render(" · conectate con (la contraseña es la que elegiste):"),
+			"   "+sField.Render(padRight(fmt.Sprintf(" mysql -h %s -P %s -u %s -p %s", host, port, st.Server.User, st.Server.Database), cw-4)),
+			"   "+sField.Render(padRight(fmt.Sprintf(" mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4", host, port, st.Server.Database), cw-4)))
 	}
 	return strings.Join(L, "\n")
-}
-
-func statusHint(s *serverScreen) string {
-	if s.running {
-		return "activo"
-	}
-	if !s.on {
-		return "marcá la casilla primero"
-	}
-	return ""
 }

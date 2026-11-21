@@ -1,4 +1,4 @@
-package tui
+package app
 
 import (
 	"fmt"
@@ -13,8 +13,8 @@ const (
 	sampleRows  = 200 // filas que se miran para calcular el ancho de cada columna
 )
 
-// grid es una tabla de resultados con scroll vertical y horizontal. Todo
-// su estado es el cursor y los desplazamientos; el contenido es de solo lectura.
+// grid es una tabla de resultados con scroll vertical y horizontal. Su estado
+// es el cursor y los desplazamientos; el contenido es de solo lectura.
 type grid struct {
 	cols   []string
 	rows   [][]string
@@ -72,7 +72,9 @@ func (g *grid) move(dRow, dCol, page int) {
 	if len(g.rows) > 0 {
 		g.cur = max(0, min(len(g.rows)-1, g.cur+dRow))
 	}
-	g.colOff = max(0, min(len(g.cols)-1, g.colOff+dCol))
+	if len(g.cols) > 0 {
+		g.colOff = max(0, min(len(g.cols)-1, g.colOff+dCol))
+	}
 	g.keepVisible(page)
 }
 
@@ -87,8 +89,9 @@ func (g *grid) keepVisible(page int) {
 	g.rowOff = max(0, g.rowOff)
 }
 
-// render dibuja la grilla en exactamente h líneas de w columnas de ancho.
-func (g *grid) render(w, h int) string {
+// render dibuja la grilla en exactamente h líneas de w columnas de ancho. La
+// fila del cursor va en azul si la grilla tiene el foco y más suave si no.
+func (g *grid) render(w, h int, focused bool) string {
 	if h < 1 || w < 1 {
 		return ""
 	}
@@ -96,16 +99,20 @@ func (g *grid) render(w, h int) string {
 	g.keepVisible(page)
 
 	lines := make([]string, 0, h)
-	lines = append(lines, bold.Render(fitLine(g.line(g.cols, w), w)))
+	lines = append(lines, sGoldBold.Render(fit(g.line(g.cols, w), w)))
 	for i := 0; i < page; i++ {
 		n := g.rowOff + i
 		if n >= len(g.rows) {
 			lines = append(lines, strings.Repeat(" ", w))
 			continue
 		}
-		l := fitLine(g.line(g.rows[n], w), w)
+		l := fit(g.line(g.rows[n], w), w)
 		if n == g.cur {
-			l = selected.Render(l)
+			if focused {
+				l = sSel.Render(l)
+			} else {
+				l = sBtn.Padding(0).Render(l)
+			}
 		}
 		lines = append(lines, l)
 	}
@@ -123,7 +130,7 @@ func (g *grid) line(cells []string, w int) string {
 		if c < len(cells) {
 			cell = cells[c]
 		}
-		b.WriteString(padTo(ansi.Truncate(cell, cw, "…"), cw))
+		b.WriteString(padRight(ansi.Truncate(cell, cw, "…"), cw))
 		x += cw
 		if x < w {
 			b.WriteString(" │ ")
@@ -133,15 +140,7 @@ func (g *grid) line(cells []string, w int) string {
 	return b.String()
 }
 
-// padTo rellena con espacios hasta el ancho w (medido en celdas de pantalla).
-func padTo(s string, w int) string {
-	if d := w - lipgloss.Width(s); d > 0 {
-		return s + strings.Repeat(" ", d)
-	}
-	return s
-}
-
-// fitLine deja la línea exactamente en w celdas: recorta o rellena.
-func fitLine(s string, w int) string {
-	return padTo(ansi.Truncate(s, w, ""), w)
+// fit deja la línea exactamente en w celdas: recorta o rellena.
+func fit(s string, w int) string {
+	return padRight(ansi.Truncate(s, w, ""), w)
 }

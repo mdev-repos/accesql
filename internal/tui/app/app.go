@@ -2,7 +2,13 @@ package app
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
+	"sync/atomic"
+
+	"access2mysql/internal/session"
+	"access2mysql/internal/web"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -13,7 +19,21 @@ const (
 	minH  = 24
 	maxCW = 78 // ancho máximo del contenido; si la ventana es mayor, se centra
 	menuW = 54 // ancho del menú principal
+
+	bodyH        = minH - 4  // filas disponibles para el cuerpo de una pantalla interna
+	previewBytes = 128 << 10 // tamaño máximo de la vista previa de un script
 )
+
+// openBrowser abre un enlace en el navegador; es una variable para que los
+// tests no abran uno de verdad.
+var openBrowser = web.OpenBrowser
+
+// nextID da un número único a cada pantalla con tareas en segundo plano: sus
+// mensajes de respuesta llevan ese número, y así una pantalla ya cerrada no
+// recibe respuestas ajenas.
+var idCounter atomic.Int64
+
+func nextID() int { return int(idCounter.Add(1)) }
 
 // screen es una pantalla de la aplicación. Se apilan: Enter en una opción
 // apila una pantalla nueva y VOLVER (o Esc) la quita.
@@ -24,27 +44,47 @@ type screen interface {
 	help() string               // teclas del pie
 }
 
-// shared es el estado que comparten todas las pantallas.
-type shared struct {
-	filePath   string
-	imageReady bool
-	serverAddr string // "" si el servidor no está activo
-	flash      string // aviso corto que se muestra sobre el pie
-	flashErr   bool
-}
-
-// App es el modelo raíz de bubbletea.
+// App es el modelo raíz de bubbletea. El estado de la base (archivo abierto,
+// imagen generada, servidor MySQL) vive en la sesión, que comparte con la
+// interfaz web: lo que se hace en una se ve en la otra.
 type App struct {
 	w, h  int
 	stack []screen
-	st    shared
+	sess  *session.Session
+	web   *web.Running // interfaz gráfica abierta desde este menú, o nil
+
+	flash    string // aviso corto que se muestra sobre el pie
+	flashErr bool
 }
 
 // New crea la aplicación con el menú principal como única pantalla.
-func New() *App {
-	a := &App{}
+func New(sess *session.Session) *App {
+	a := &App{sess: sess}
 	a.stack = []screen{newMain()}
 	return a
+}
+
+// Close detiene lo que la aplicación haya levantado (la interfaz web). La
+// sesión la cierra quien la creó.
+func (a *App) Close() {
+	if a.web != nil {
+		a.web.Shutdown()
+		a.web = nil
+	}
+}
+
+// webRunning dice si la interfaz web abierta desde este menú sigue activa.
+func (a *App) webRunning() bool {
+	if a.web == nil {
+		return false
+	}
+	select {
+	case <-a.web.Done():
+		a.web = nil
+		return false
+	default:
+		return true
+	}
 }
 
 func (a *App) top() screen { return a.stack[len(a.stack)-1] }
@@ -65,8 +105,30 @@ func (a *App) pop() {
 	}
 }
 
-func (a *App) say(msg string)   { a.st.flash, a.st.flashErr = msg, false }
-func (a *App) alert(msg string) { a.st.flash, a.st.flashErr = msg, true }
+func (a *App) say(msg string)   { a.flash, a.flashErr = msg, false }
+func (a *App) alert(msg string) { a.flash, a.flashErr = msg, true }
+
+// saveDir es la carpeta donde se guardan los archivos que genera la interfaz
+// (resultados y scripts): junto a la base abierta, o si no se puede escribir
+// ahí, la carpeta de trabajo y por último la del usuario.
+func (a *App) saveDir() string {
+	var cands []string
+	if f := a.sess.State().File; f != "" {
+		cands = append(cands, filepath.Dir(f))
+	}
+	if wd, err := os.Getwd(); err == nil {
+		cands = append(cands, wd)
+	}
+	cands = append(cands, session.DefaultDir())
+	for _, d := range cands {
+		if f, err := os.CreateTemp(d, ".accesql-*"); err == nil {
+			f.Close()
+			os.Remove(f.Name())
+			return d
+		}
+	}
+	return "."
+}
 
 // Init implementa tea.Model.
 func (a *App) Init() tea.Cmd { return nil }
@@ -81,7 +143,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.String() == "ctrl+c" {
 			return a, tea.Quit
 		}
-		a.st.flash = "" // el aviso dura hasta la próxima tecla
+		a.flash = "" // el aviso dura hasta la próxima tecla
 	}
 	return a, a.top().update(a, msg)
 }
@@ -103,11 +165,11 @@ func (a *App) View() string {
 	cw := min(a.w-2, maxCW)
 
 	flash := ""
-	if a.st.flash != "" {
-		if a.st.flashErr {
-			flash = sErr.Render(a.st.flash)
+	if a.flash != "" {
+		if a.flashErr {
+			flash = sErr.Render(clip(a.flash, cw))
 		} else {
-			flash = sOK.Render(a.st.flash)
+			flash = sOK.Render(clip(a.flash, cw))
 		}
 	}
 	help := helpLine(s.help())
@@ -116,8 +178,7 @@ func (a *App) View() string {
 	if s.crumb() == "" {
 		block = lipgloss.JoinVertical(lipgloss.Center, s.view(a, cw), flash, help)
 	} else {
-		bodyH := min(a.h, minH) - 4 // cabecera (2) + aviso (1) + pie (1)
-		body := fitLines(s.view(a, cw), cw, bodyH)
+		body := fitLines(s.view(a, cw), cw, bodyH) // cabecera (2) + aviso (1) + pie (1) quedan fuera
 		header := sHeader.Width(cw).Render(" Accesql › " + s.crumb())
 		rule := sGold.Render(strings.Repeat("━", cw))
 		block = lipgloss.JoinVertical(lipgloss.Left, header, rule, body,
@@ -154,4 +215,20 @@ func helpLine(h string) string {
 		}
 	}
 	return strings.Join(parts, sMuted.Render(" · "))
+}
+
+// baseName devuelve el nombre del archivo de una ruta.
+func baseName(path string) string { return filepath.Base(path) }
+
+// fmtSize escribe un tamaño en bytes de forma legible.
+func fmtSize(n int64) string {
+	switch {
+	case n < 1024:
+		return fmt.Sprintf("%d B", n)
+	case n < 1<<20:
+		return fmt.Sprintf("%d KB", n>>10)
+	case n < 1<<30:
+		return fmt.Sprintf("%.1f MB", float64(n)/(1<<20))
+	}
+	return fmt.Sprintf("%.2f GB", float64(n)/(1<<30))
 }

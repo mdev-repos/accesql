@@ -4,6 +4,7 @@ package cli
 import (
 	"os"
 
+	"access2mysql/internal/session"
 	"access2mysql/internal/tui/app"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -23,23 +24,45 @@ func isTerminal() bool {
 }
 
 func newRootCmd() *cobra.Command {
+	var file string
 	root := &cobra.Command{
-		Use:          "access-tool",
-		Short:        "Herramienta para leer bases Microsoft Access (solo lectura)",
+		Use:   "access-tool",
+		Short: "Herramienta para leer bases Microsoft Access (solo lectura)",
+		Long: `Accesql lee bases de Microsoft Access (.accdb / .mdb) en modo solo lectura y las
+ofrece como JSON, como servidor MySQL o como scripts SQL de MySQL.
+
+Sin argumentos abre un menú interactivo en la terminal (es lo que ocurre con
+doble clic): abrir una base, generar la imagen MySQL, exponerla como servidor,
+consultarla, convertirla y ver sus relaciones. También puede abrir la interfaz
+gráfica en el navegador, sobre la misma base ya cargada.`,
+		Example: `  access-tool                      # menú interactivo
+  access-tool -f datos.accdb       # menú con la base ya elegida
+  access-tool dump -f datos.accdb  # JSON, para scripts y automatización`,
 		SilenceUsage: true, // no imprimir el uso completo ante cada error
 		// Sin argumentos (por ejemplo, con doble clic) abre el menú interactivo.
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !isTerminal() {
 				return cmd.Help()
 			}
-			_, err := tea.NewProgram(app.New(), tea.WithAltScreen()).Run()
+			sess := session.New()
+			defer sess.Close()
+			if file != "" {
+				if err := sess.Open(file); err != nil {
+					return err
+				}
+			}
+			a := app.New(sess)
+			defer a.Close()
+			// WithAltScreen usa la pantalla alternativa: al salir, la terminal
+			// queda como estaba antes.
+			_, err := tea.NewProgram(a, tea.WithAltScreen()).Run()
 			return err
 		},
 	}
+	root.Flags().StringVarP(&file, "file", "f", "", "archivo .accdb/.mdb a preseleccionar en el menú")
 	root.AddCommand(newDumpCmd())
 	root.AddCommand(newQueryCmd())
 	root.AddCommand(newServeCmd())
-	root.AddCommand(newUICmd())
 	root.AddCommand(newWebCmd())
 	return root
 }

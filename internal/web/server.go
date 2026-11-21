@@ -452,35 +452,6 @@ func (s *server) handleServerStop(w http.ResponseWriter, r *http.Request) {
 
 // --- Scripts MySQL ------------------------------------------------------
 
-var errPreviewFull = errors.New("vista previa completa")
-
-// previewBuf recibe el script hasta previewBytes y después corta la generación.
-type previewBuf struct {
-	buf  bytes.Buffer
-	full bool
-}
-
-func (p *previewBuf) Write(b []byte) (int, error) {
-	room := previewBytes - p.buf.Len()
-	if len(b) > room {
-		p.buf.Write(b[:max(room, 0)])
-		p.full = true
-		return max(room, 0), errPreviewFull
-	}
-	return p.buf.Write(b)
-}
-
-// text devuelve lo acumulado, cortado en el último salto de línea si quedó incompleto.
-func (p *previewBuf) text() string {
-	t := p.buf.String()
-	if p.full {
-		if i := strings.LastIndexByte(t, '\n'); i >= 0 {
-			t = t[:i+1]
-		}
-	}
-	return t
-}
-
 // lazyDownload fija los encabezados de descarga recién al primer byte: si el
 // script falla antes de escribir algo (por ejemplo, un nombre inválido), todavía
 // se puede responder con un error normal.
@@ -502,13 +473,12 @@ func (l *lazyDownload) Write(b []byte) (int, error) {
 // el comienzo del script; si no, lo descarga completo.
 func (s *server) serveScript(w http.ResponseWriter, r *http.Request, preview bool, filename string, gen func(ctx context.Context, w io.Writer) error) {
 	if preview {
-		var p previewBuf
-		err := gen(r.Context(), &p)
-		if err != nil && !errors.Is(err, errPreviewFull) {
+		text, truncated, err := session.Preview(previewBytes, func(out io.Writer) error { return gen(r.Context(), out) })
+		if err != nil {
 			fail(w, err)
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"script": p.text(), "truncated": p.full})
+		writeJSON(w, http.StatusOK, map[string]any{"script": text, "truncated": truncated})
 		return
 	}
 	ld := &lazyDownload{w: w, filename: filename}
