@@ -15,6 +15,7 @@
   <img alt="Linux y Windows" src="https://img.shields.io/badge/plataformas-Linux%20%7C%20Windows-1b4476">
   <img alt="Sin dependencias de C" src="https://img.shields.io/badge/CGO-desactivado-2a5a94">
   <img alt="Estado: MVP" src="https://img.shields.io/badge/estado-MVP-8a94a3">
+  <img alt="Licencia: PolyForm Noncommercial o Internal Use" src="https://img.shields.io/badge/licencia-PolyForm%20NC%20%C2%B7%20Internal%20Use-c8a24a">
 </p>
 
 <p align="center">
@@ -203,6 +204,7 @@ Más opciones y cómo se arman los scripts: [Convertir a MySQL](docs/convertir-a
 | [Convertir a MySQL](docs/convertir-a-mysql.md) | los dos modos, tipos, claves, relaciones y compatibilidad |
 | [Seguridad](docs/seguridad.md) | modelo de seguridad y sus límites |
 | [Tipos y limitaciones](docs/tipos-y-limitaciones.md) | conversión a JSON, comparación de texto, lo que todavía no funciona |
+| [Licencia](docs/licencia.md) | qué se puede y qué no, sin garantías, privacidad y marcas |
 | [Desarrollo](docs/desarrollo.md) | compilar, tests, estructura del proyecto, cómo contribuir |
 
 ## Estado del proyecto
@@ -219,10 +221,27 @@ MariaDB real). Lo que todavía falta, con total honestidad:
 
 Se agradecen los reportes de errores, las pruebas con bases reales y las mejoras. Antes de enviar un
 cambio: `gofmt -l .`, `go vet ./...` y `go test ./...` deben pasar. Más en [Desarrollo](docs/desarrollo.md).
+Al enviar un cambio aceptás que se publique bajo las licencias del proyecto.
 
 ## Licencia
 
-*Pendiente de definir.* Hasta que se publique una licencia, todos los derechos están reservados.
+El código es público, pero **no es «open source» en el sentido de la OSI**: está pensado para que nadie lucre
+con él. Se ofrece bajo **dos licencias, a elección de cada persona**:
+
+- **[PolyForm Noncommercial 1.0.0](LICENSES/PolyForm-Noncommercial-1.0.0.md)**: uso personal, de estudio,
+  investigación o hobby, y organizaciones sin fines de lucro, escuelas o entidades públicas.
+- **[PolyForm Internal Use 1.0.0](LICENSES/PolyForm-Internal-Use-1.0.0.md)**: una empresa puede usarlo en su
+  propia operación (por ejemplo, para migrar sus propias bases de Access).
+
+**No se puede** venderlo, incluirlo en un producto que se vende, ofrecerlo como servicio ni usarlo para prestar
+servicios a terceros. Se entrega **«tal cual», sin garantías**: hacé copias de seguridad y revisá los scripts
+generados antes de ejecutarlos en producción. No envía datos a ningún lado.
+
+Más detalle en [Licencia](docs/licencia.md) (resumen no vinculante; vale el texto de las licencias). Los
+componentes de terceros conservan sus propias licencias: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+*Microsoft Access* y *MySQL* son marcas de sus respectivos dueños; Accesql es un proyecto independiente, sin
+relación con Microsoft ni con Oracle.
 
 ## Créditos
 

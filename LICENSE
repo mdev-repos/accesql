@@ -1,0 +1,60 @@
+Accesql
+Required Notice: Copyright 2026 mdev-mnm (https://github.com/mdev-repos/accesql)
+
+Accesql is made available under TWO licenses. You may use it under whichever of
+them applies to you; you do not need to comply with both:
+
+  1. PolyForm Noncommercial License 1.0.0
+     For noncommercial purposes: personal use, hobby projects, study, research,
+     teaching, and use by charitable, educational, public-safety and government
+     organizations. You may share copies for noncommercial purposes.
+     Full text: LICENSES/PolyForm-Noncommercial-1.0.0.md
+     Online:    https://polyformproject.org/licenses/noncommercial/1.0.0
+
+  2. PolyForm Internal Use License 1.0.0
+     For the internal business operations of you and your company. You may make
+     changes for that purpose, but you may not distribute the software.
+     Full text: LICENSES/PolyForm-Internal-Use-1.0.0.md
+     Online:    https://polyformproject.org/licenses/internal-use/1.0.0
+
+Neither license lets you sell Accesql, include it in a product you sell, offer
+it as a paid or hosted service, or use it to provide services to other people
+or companies. If you want to do something these licenses do not cover, ask the
+author for a separate written license.
+
+As far as the law allows, the software comes as is, without any warranty or
+condition, and the licensor will not be liable to you for any damages arising
+out of these terms or the use or nature of the software, under any kind of
+legal claim (see the "No Liability" section of both licenses).
+
+Third-party components included in Accesql are under their own licenses; see
+THIRD_PARTY_NOTICES.md. Those licenses apply to those components, not to this
+file.
+
+"Microsoft Access" and "MySQL" are trademarks of their respective owners.
+Accesql is an independent project and is not affiliated with, endorsed by or
+sponsored by Microsoft or Oracle.
+
+------------------------------------------------------------------------------
+Resumen en español (no vinculante: vale el texto en inglés de las licencias)
+------------------------------------------------------------------------------
+
+Accesql se ofrece bajo DOS licencias, a elección de cada persona:
+
+  - Uso NO comercial (PolyForm Noncommercial): personal, hobby, estudio,
+    investigación, enseñanza y organizaciones sin fines de lucro, educativas o
+    públicas. Se puede compartir sin fines comerciales.
+  - Uso INTERNO de una empresa (PolyForm Internal Use): una empresa puede usar
+    Accesql en su propia operación, pero no puede distribuirlo.
+
+Con ninguna de las dos se puede vender Accesql, incluirlo en un producto que se
+vende, ofrecerlo como servicio (pago o alojado) ni usarlo para prestar
+servicios a terceros. Para cualquier otro uso, pedir una licencia aparte por
+escrito al autor.
+
+El programa se entrega «tal cual», sin garantías, y el autor no responde por
+daños derivados de su uso. Hacé siempre una copia de seguridad y revisá los
+scripts generados antes de ejecutarlos en un servidor de producción.
+
+"Microsoft Access" y "MySQL" son marcas de sus respectivos dueños. Accesql es un
+proyecto independiente, sin relación con Microsoft ni con Oracle.
