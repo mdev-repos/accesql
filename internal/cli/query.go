@@ -24,6 +24,7 @@ entre comillas invertidas: SELECT * FROM ` + "`Order Details`" + `.
 
 Los datos son una foto de solo lectura: nada se escribe en el .accdb.`,
 		Example: `  accesql query -f testdb/Northwind.accdb -q "SELECT ID, Company FROM Customers LIMIT 3"`,
+		PreRunE: requireFlags("file", "sql"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			src, err := access.Open(file)
 			if err != nil {
@@ -45,7 +46,5 @@ Los datos son una foto de solo lectura: nada se escribe en el .accdb.`,
 
 	cmd.Flags().StringVarP(&file, "file", "f", "", "archivo .accdb/.mdb (obligatorio)")
 	cmd.Flags().StringVarP(&sql, "sql", "q", "", "consulta SQL (obligatorio)")
-	cmd.MarkFlagRequired("file")
-	cmd.MarkFlagRequired("sql")
 	return cmd
 }

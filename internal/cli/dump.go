@@ -25,6 +25,7 @@ func newDumpCmd() *cobra.Command {
 		Short: "Exporta tablas de un Access a JSON",
 		Example: `  accesql dump --file testdb/Northwind.accdb --table Products
   accesql dump --file testdb/Northwind.accdb --out salida/`,
+		PreRunE: requireFlags("file"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			db, err := access.Open(file)
 			if err != nil {
@@ -76,7 +77,6 @@ func newDumpCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&file, "file", "f", "", "archivo .accdb/.mdb (obligatorio)")
 	cmd.Flags().StringVarP(&outDir, "out", "o", "", "carpeta de salida (un .json por tabla); sin esto imprime por stdout")
 	cmd.Flags().StringVarP(&table, "table", "t", "", "exportar solo esta tabla")
-	cmd.MarkFlagRequired("file")
 	return cmd
 }
 

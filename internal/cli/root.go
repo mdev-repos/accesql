@@ -6,6 +6,7 @@ import (
 
 	"accesql/internal/session"
 	"accesql/internal/tui/app"
+	"accesql/internal/version"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
@@ -39,6 +40,7 @@ gráfica en el navegador, sobre la misma base ya cargada.`,
   accesql -f datos.accdb       # menú con la base ya elegida
   accesql dump -f datos.accdb  # JSON, para scripts y automatización`,
 		SilenceUsage: true, // no imprimir el uso completo ante cada error
+		Args:         unknownCommand,
 		// Sin argumentos (por ejemplo, con doble clic) abre el menú interactivo.
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !isTerminal() {
@@ -64,6 +66,7 @@ gráfica en el navegador, sobre la misma base ya cargada.`,
 	root.AddCommand(newQueryCmd())
 	root.AddCommand(newServeCmd())
 	root.AddCommand(newWebCmd())
+	localize(root, version.Version)
 	return root
 }
 

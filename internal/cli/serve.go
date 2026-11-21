@@ -47,6 +47,7 @@ Por seguridad escucha solo en 127.0.0.1 y exige usuario y contraseña. La
 contraseña se pasa con --password o, mejor, con la variable ` + passwordEnv + `.`,
 		Example: `  ` + passwordEnv + `=secreta accesql serve -f datos.accdb --port 3307
   mysql -h 127.0.0.1 -P 3307 -u access -psecreta access`,
+		PreRunE: requireFlags("file"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if password == "" {
 				password = os.Getenv(passwordEnv)
@@ -108,6 +109,5 @@ contraseña se pasa con --password o, mejor, con la variable ` + passwordEnv + `
 	cmd.Flags().StringVar(&password, "password", "", "contraseña (o variable "+passwordEnv+")")
 	cmd.Flags().StringVarP(&database, "database", "d", engine.DefaultDatabase, "nombre de la base que ven los clientes")
 	cmd.Flags().DurationVar(&reload, "reload-every", 0, "revisar el archivo cada este tiempo y recargarlo si cambió (ej. 5m; 0 = nunca)")
-	cmd.MarkFlagRequired("file")
 	return cmd
 }
