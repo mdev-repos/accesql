@@ -13,6 +13,7 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newQueryCmd())
 	root.AddCommand(newServeCmd())
 	root.AddCommand(newUICmd())
+	root.AddCommand(newWebCmd())
 	return root
 }
 

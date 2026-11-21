@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accesql</title>
+  <meta name="description" content="Convierte bases de Microsoft Access a MySQL">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <!-- Iconos reutilizables: <use href="#i-nombre"> -->
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V6M6 11l6-6 6 6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-diagram" viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="6" rx="1"/><rect x="14" y="14" width="7" height="6" rx="1"/><path d="M10 7h4a3 3 0 0 1 3 3v4"/></symbol>
+  </svg>
+
+  <header class="head">
+    <div class="head-in">
+      <img class="head-logo" src="logo.svg" alt="" width="44" height="44">
+      <h1 class="head-name">Accesql</h1>
+      <span class="head-ver" id="ver" title="Versión">v0.1.0</span>
+      <span class="head-tag">Convierte bases de Microsoft Access a MySQL</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ============ Base de datos ============ -->
+    <section class="panel" id="p-db" aria-labelledby="h-db">
+      <h2 class="banner" id="h-db">Base de datos</h2>
+      <div class="body">
+        <div class="field">
+          <label for="filePath">Archivo de Access</label>
+          <div class="input-row">
+            <input type="text" id="filePath" readonly placeholder="Ningún archivo seleccionado">
+            <button type="button" class="btn" id="openBtn"><svg class="ico"><use href="#i-folder"/></svg>Abrir…</button>
+          </div>
+          <p class="hint">Se abre en modo solo lectura: el archivo original nunca se modifica.</p>
+        </div>
+
+        <div class="field">
+          <label for="dbName">Nombre de la base MySQL</label>
+          <input type="text" id="dbName" autocomplete="off" spellcheck="false" placeholder="se completa al abrir un archivo">
+          <p class="hint">Es el nombre que usarán los programas para conectarse (<code>dbname=…</code>). No se puede cambiar después de generar la imagen.</p>
+        </div>
+
+        <p class="error" id="genError" role="alert" hidden></p>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="genBtn" disabled>Generar imagen MySQL</button>
+          <button type="button" class="btn" id="cancelBtn" hidden>Cancelar</button>
+        </div>
+
+        <div class="progress" id="progress" hidden>
+          <progress id="prog" max="100" value="0" aria-label="Progreso de la carga"></progress>
+          <p class="hint" id="progText" aria-live="polite"></p>
+        </div>
+
+        <div class="ok-box" id="okBox" role="status" hidden>
+          <span class="ok-tick"><svg class="ico"><use href="#i-check"/></svg></span>
+          <div class="grow">
+            <strong>¡Imagen MySQL generada!</strong>
+            <span id="okSummary"></span>
+          </div>
+          <button type="button" class="btn btn-sm" id="dumpBtn" title="Descargar todas las tablas en un único JSON"><svg class="ico"><use href="#i-download"/></svg>Toda la base (JSON)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Servidor MySQL ============ -->
+    <section class="panel is-locked" id="p-server" aria-labelledby="h-server">
+      <h2 class="banner" id="h-server">Servidor MySQL <span class="opt">opcional</span>
+        <span class="lock-note"><svg class="ico"><use href="#i-lock"/></svg>Se habilita al generar la imagen</span></h2>
+      <fieldset class="body" disabled>
+        <legend class="sr">Servidor MySQL</legend>
+        <label class="check"><input type="checkbox" id="srvOn"><span>Exponer la imagen como servidor MySQL
+          <small>Para que PHP u otros programas se conecten como a una base MySQL común.</small></span></label>
+
+        <fieldset class="grid2" id="srvFields" disabled>
+          <legend class="sr">Datos de conexión</legend>
+          <div class="field">
+            <label for="srvHost">Dirección</label>
+            <input type="text" id="srvHost" value="127.0.0.1" autocomplete="off">
+            <p class="hint" id="srvHostHint">Solo esta computadora.</p>
+          </div>
+          <div class="field">
+            <label for="srvPort">Puerto</label>
+            <input type="number" id="srvPort" value="3306" min="1" max="65535">
+          </div>
+          <div class="field">
+            <label for="srvUser">Usuario</label>
+            <input type="text" id="srvUser" value="access" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="srvPass">Contraseña</label>
+            <div class="input-row">
+              <input type="password" id="srvPass" autocomplete="new-password" placeholder="Obligatoria">
+              <button type="button" class="btn btn-sm" id="srvShow" aria-pressed="false">Mostrar</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="srvDb">Nombre de la base</label>
+            <input type="text" id="srvDb" readonly>
+          </div>
+        </fieldset>
+
+        <p class="error" id="srvError" role="alert" hidden></p>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="srvBtn" disabled><svg class="ico"><use href="#i-play"/></svg><span>Iniciar servidor</span></button>
+          <span class="status"><i class="dot" id="srvDot"></i><span id="srvStatus">Detenido</span></span>
+        </div>
+
+        <div class="connect" id="srvConnect" hidden>
+          <p class="hint">Conectate con cualquiera de estas opciones (la contraseña es la que elegiste):</p>
+          <div class="code-row"><code id="srvCmd"></code><button type="button" class="btn btn-sm" data-copy="srvCmd"><svg class="ico"><use href="#i-copy"/></svg>Copiar</button></div>
+          <div class="code-row"><code id="srvDsn"></code><button type="button" class="btn btn-sm" data-copy="srvDsn"><svg class="ico"><use href="#i-copy"/></svg>Copiar</button></div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- ============ Consultas ============ -->
+    <section class="panel is-locked" id="p-query" aria-labelledby="h-query">
+      <h2 class="banner" id="h-query">Consultas SQL <span class="opt">opcional</span>
+        <span class="lock-note"><svg class="ico"><use href="#i-lock"/></svg>Se habilita al generar la imagen</span></h2>
+      <fieldset class="body" disabled>
+        <legend class="sr">Consultas SQL</legend>
+        <details class="tables">
+          <summary>Tablas disponibles <span id="tableCount">(0)</span></summary>
+          <div class="chips" id="tableChips"></div>
+          <p class="hint">Hacé clic en una tabla para escribir su consulta.</p>
+        </details>
+
+        <div class="field">
+          <label for="sql">Consulta</label>
+          <textarea id="sql" rows="5" spellcheck="false" placeholder="SELECT * FROM `Customers` LIMIT 100&#10;&#10;Dialecto MySQL: JOIN, GROUP BY, subconsultas… Los nombres con espacios van entre `comillas invertidas`."></textarea>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="runBtn"><svg class="ico"><use href="#i-play"/></svg>Ejecutar <kbd>Ctrl</kbd>+<kbd>Enter</kbd></button>
+          <button type="button" class="btn" id="clearBtn">Limpiar</button>
+          <label class="inline">Máx. filas
+            <select id="limit"><option>100</option><option>500</option><option selected>1000</option><option>10000</option></select>
+          </label>
+        </div>
+
+        <p class="error" id="queryError" role="alert" hidden></p>
+
+        <div class="result" id="result" hidden>
+          <div class="result-bar">
+            <span id="resultInfo" aria-live="polite"></span>
+            <span class="spacer"></span>
+            <button type="button" class="btn btn-sm" id="expJson"><svg class="ico"><use href="#i-download"/></svg>JSON</button>
+            <button type="button" class="btn btn-sm" id="expCsv" title="Separado por ; y con acentos correctos para Excel en español"><svg class="ico"><use href="#i-download"/></svg>CSV</button>
+            <button type="button" class="btn btn-sm" id="expSql"><svg class="ico"><use href="#i-download"/></svg>SQL</button>
+            <label class="inline inline-sm" title="Nombre de la tabla en los INSERT">tabla
+              <input type="text" id="expTable" value="resultado" autocomplete="off" spellcheck="false">
+            </label>
+          </div>
+          <div class="grid-wrap"><table class="grid" id="grid"></table></div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- ============ Convertir a MySQL ============ -->
+    <section class="panel is-locked" id="p-convert" aria-labelledby="h-convert">
+      <h2 class="banner" id="h-convert">Convertir a MySQL <span class="opt">opcional</span>
+        <span class="lock-note"><svg class="ico"><use href="#i-lock"/></svg>Se habilita al generar la imagen</span></h2>
+      <fieldset class="body" disabled>
+        <legend class="sr">Convertir a MySQL</legend>
+
+        <div class="radios">
+          <label class="radio"><input type="radio" name="mode" value="new" checked>
+            <span><strong>Crear una base de datos nueva</strong>
+            <small>Genera el script con las tablas y sus datos para una base MySQL vacía.</small></span></label>
+          <label class="radio"><input type="radio" name="mode" value="add">
+            <span><strong>Agregar datos a tablas que ya existen</strong>
+            <small>Genera solo los <code>INSERT</code> para sumar registros a tablas de una base MySQL existente.</small></span></label>
+        </div>
+
+        <div id="modeNew" class="mode">
+          <div class="field">
+            <label for="newName">Nombre de la base de datos</label>
+            <input type="text" id="newName" autocomplete="off" spellcheck="false">
+          </div>
+          <label class="check"><input type="checkbox" id="newData" checked><span>Incluir los datos <small>Si lo desmarcás, solo se crea la estructura de las tablas.</small></span></label>
+          <label class="check"><input type="checkbox" id="newFk" checked><span>Incluir las relaciones <small>Crea las <code>FOREIGN KEY</code> que Access exigía (integridad referencial) y las claves primarias que los datos confirman.</small></span></label>
+          <label class="check"><input type="checkbox" id="newDrop"><span>Borrar la base si ya existe <small>Agrega <code>DROP DATABASE IF EXISTS</code>. Cuidado: elimina lo que haya.</small></span></label>
+        </div>
+
+        <div id="modeAdd" class="mode" hidden>
+          <p class="hint">Cada tabla de Access se copia a la tabla de MySQL que indiques. Si la de MySQL tiene menos columnas, abrí <b>Columnas</b> y pegá las que tiene: solo se copian las que coinciden por nombre (un <code>INSERT</code> con una columna que no existe fallaría).</p>
+          <div class="map-tools">
+            <button type="button" class="btn btn-sm" id="mapAll">Marcar todas</button>
+            <button type="button" class="btn btn-sm" id="mapNone">Ninguna</button>
+          </div>
+          <div class="map" id="mapList" role="group" aria-label="Tablas a migrar"></div>
+          <div class="grid2">
+            <div class="field">
+              <label for="dupMode">Si el registro ya existe</label>
+              <select id="dupMode">
+                <option value="ignore">Omitirlo (no cambia nada)</option>
+                <option value="update">Actualizarlo con los datos de Access</option>
+                <option value="replace">Reemplazarlo por completo</option>
+              </select>
+            </div>
+          </div>
+          <label class="check"><input type="checkbox" id="addTx" checked><span>Envolver en una transacción <small>Permite deshacer todo si algo falla a mitad de camino (tablas InnoDB).</small></span></label>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="scriptBtn">Generar script SQL</button>
+        </div>
+
+        <p class="error" id="scriptError" role="alert" hidden></p>
+
+        <div class="result" id="scriptOut" hidden>
+          <div class="result-bar">
+            <span id="scriptInfo"></span>
+            <span class="spacer"></span>
+            <button type="button" class="btn btn-sm" id="scriptCopy"><svg class="ico"><use href="#i-copy"/></svg>Copiar</button>
+            <button type="button" class="btn btn-sm" id="scriptDown"><svg class="ico"><use href="#i-download"/></svg>Descargar .sql</button>
+          </div>
+          <ul class="notes" id="scriptNotes" hidden></ul>
+          <textarea id="scriptText" class="mono" rows="12" readonly spellcheck="false" aria-label="Script SQL generado"></textarea>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- ============ Diagrama ============ -->
+    <section class="panel is-locked" id="p-er" aria-labelledby="h-er">
+      <h2 class="banner" id="h-er">Diagrama de relaciones <span class="opt">opcional</span>
+        <span class="lock-note"><svg class="ico"><use href="#i-lock"/></svg>Se habilita al generar la imagen</span></h2>
+      <fieldset class="body row-between" disabled>
+        <legend class="sr">Diagrama de relaciones</legend>
+        <p class="plain">Mirá las tablas, sus campos y cómo se relacionan entre sí.</p>
+        <button type="button" class="btn" id="erBtn"><svg class="ico"><use href="#i-diagram"/></svg>Ver diagrama</button>
+      </fieldset>
+    </section>
+
+  </main>
+
+  <footer class="foot" id="foot">Solo lectura: tus datos de Access no se modifican</footer>
+
+  <!-- ============ Explorador de archivos ============ -->
+  <dialog id="fileDialog" aria-labelledby="fileTitle">
+    <div class="dlg-bar"><h2 id="fileTitle">Abrir base de datos</h2>
+      <button type="button" class="dlg-x" data-close aria-label="Cerrar"><svg class="ico"><use href="#i-x"/></svg></button></div>
+    <div class="dlg-body">
+      <div class="input-row">
+        <button type="button" class="btn" id="upBtn"><svg class="ico"><use href="#i-up"/></svg>Subir</button>
+        <input type="text" id="curPath" readonly aria-label="Carpeta actual">
+      </div>
+      <ul class="files" id="fileList" aria-label="Carpetas y archivos"></ul>
+      <p class="error" id="fileError" role="alert" hidden></p>
+      <p class="hint">Tipo: bases de Access (.accdb, .mdb)</p>
+    </div>
+    <div class="dlg-foot">
+      <span class="sel" id="selName">Ningún archivo seleccionado</span>
+      <span class="spacer"></span>
+      <button type="button" class="btn" data-close>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="acceptBtn" disabled>Abrir</button>
+    </div>
+  </dialog>
+
+  <!-- ============ Diagrama ============ -->
+  <dialog id="erDialog" class="wide" aria-labelledby="erTitle">
+    <div class="dlg-bar"><h2 id="erTitle">Diagrama de relaciones</h2>
+      <button type="button" class="dlg-x" data-close aria-label="Cerrar"><svg class="ico"><use href="#i-x"/></svg></button></div>
+    <div class="dlg-body er-body">
+      <div id="erHost" class="er-host"></div>
+    </div>
+    <div class="dlg-foot">
+      <span class="sel" id="erNote">Cargando…</span>
+      <span class="spacer"></span>
+      <button type="button" class="btn" data-close>Cerrar</button>
+    </div>
+  </dialog>
+
+  <!-- ============ Falta el token ============ -->
+  <dialog id="authDialog" aria-labelledby="authTitle">
+    <div class="dlg-bar"><h2 id="authTitle">Falta el token de acceso</h2></div>
+    <div class="dlg-body">
+      <p>Por seguridad, esta página solo funciona si se abre con el enlace que imprime el programa al iniciar (termina en <code>#t=…</code>).</p>
+      <p>Volvé a la terminal donde corriste <code>access-tool web</code>, copiá ese enlace completo y pegalo en el navegador.</p>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
