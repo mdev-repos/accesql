@@ -115,7 +115,7 @@ Cada versión publicada en la pestaña [*Releases*](https://github.com/mdev-repo
 | Archivo | Para |
 |---|---|
 | `accesql-X.Y.Z-windows-amd64.zip` | Windows 10 u 11 de 64 bits |
-| `accesql-X.Y.Z-linux-amd64.tar.gz` | Linux de 64 bits (incluye instalador y ícono) |
+| `accesql-X.Y.Z-linux-amd64.tar.gz` | Linux de 64 bits (incluye instalador e ícono) |
 | `SHA256SUMS` | huellas para comprobar que la descarga es la original |
 
 > *Todavía no hay versiones publicadas*: por ahora, compilá desde el código fuente (más abajo).
