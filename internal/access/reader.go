@@ -4,9 +4,12 @@
 package access
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"time"
 
 	"accesql/internal/jsonout"
@@ -39,6 +42,12 @@ type Table struct {
 
 // Open abre el archivo Access indicado.
 func Open(path string) (*DB, error) {
+	// El controlador deja abierto el archivo cuando falla al leerlo (en Windows
+	// eso impide borrarlo o moverlo hasta cerrar el programa). Por eso se
+	// descartan antes los archivos que claramente no son de Access.
+	if err := checkHeader(path); err != nil {
+		return nil, err
+	}
 	db, err := sql.Open("gomdb", path)
 	if err != nil {
 		return nil, fmt.Errorf("abriendo %q: %w", path, err)
@@ -153,4 +162,19 @@ func forJSON(c Column, v any) any {
 		}
 	}
 	return v
+}
+
+// checkHeader comprueba la firma que llevan todas las bases de Access en el
+// byte 4 ("Standard Jet DB" o "Standard ACE DB").
+func checkHeader(path string) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("abriendo %q: %w", path, err)
+	}
+	defer f.Close()
+	buf := make([]byte, 19)
+	if _, err := io.ReadFull(f, buf); err != nil || !bytes.HasPrefix(buf[4:], []byte("Standard ")) {
+		return fmt.Errorf("leyendo %q: no parece una base de Access", path)
+	}
+	return nil
 }
