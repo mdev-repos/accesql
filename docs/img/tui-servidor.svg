@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="708" height="492" viewBox="0 0 708 492" role="img" aria-label="accesql">
+<rect width="708" height="492" rx="10" fill="#1e1e2e"/>
+<path d="M0 10a10 10 0 0 1 10-10h688a10 10 0 0 1 10 10v24H0z" fill="#181825"/>
+<circle cx="20" cy="17" r="6" fill="#f38ba8"/><circle cx="40" cy="17" r="6" fill="#f9e2af"/><circle cx="60" cy="17" r="6" fill="#a6e3a1"/>
+<text x="354" y="22" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#a6adc8">accesql</text>
+<g font-family="DejaVu Sans Mono, Menlo, Consolas, Liberation Mono, monospace" font-size="14" xml:space="preserve">
+<rect x="26.4" y="48.0" width="655.6" height="18.4" fill="#1b4476"/>
+<text x="34.8" y="61.0" fill="#ffffff" font-weight="bold" textLength="58.8" lengthAdjust="spacingAndGlyphs">Accesql</text>
+<text x="106.2" y="61.0" fill="#ffffff" font-weight="bold" text-anchor="middle">›</text>
+<text x="118.8" y="61.0" fill="#ffffff" font-weight="bold" textLength="67.2" lengthAdjust="spacingAndGlyphs">Servidor</text>
+<text x="194.4" y="61.0" fill="#ffffff" font-weight="bold" textLength="42.0" lengthAdjust="spacingAndGlyphs">MySQL</text>
+<text x="26.4" y="79.0" fill="#c8a249" textLength="655.2" lengthAdjust="spacingAndGlyphs">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</text>
+<rect x="26.4" y="84.0" width="655.6" height="18.4" fill="#2a5993"/>
+<text x="39.0" y="97.0" fill="#c8a249" font-weight="bold" text-anchor="middle">▸</text>
+<text x="51.6" y="97.0" fill="#ffffff" font-weight="bold" textLength="25.2" lengthAdjust="spacingAndGlyphs">[x]</text>
+<text x="85.2" y="97.0" fill="#ffffff" font-weight="bold" textLength="58.8" lengthAdjust="spacingAndGlyphs">Exponer</text>
+<text x="152.4" y="97.0" fill="#ffffff" font-weight="bold" textLength="16.8" lengthAdjust="spacingAndGlyphs">la</text>
+<text x="177.6" y="97.0" fill="#ffffff" font-weight="bold" textLength="50.4" lengthAdjust="spacingAndGlyphs">imagen</text>
+<text x="236.4" y="97.0" fill="#ffffff" font-weight="bold" textLength="33.6" lengthAdjust="spacingAndGlyphs">como</text>
+<text x="278.4" y="97.0" fill="#ffffff" font-weight="bold" textLength="67.2" lengthAdjust="spacingAndGlyphs">servidor</text>
+<text x="354.0" y="97.0" fill="#ffffff" font-weight="bold" textLength="42.0" lengthAdjust="spacingAndGlyphs">MySQL</text>
+<text x="68.4" y="115.0" fill="#8a93a3" textLength="33.6" lengthAdjust="spacingAndGlyphs">Para</text>
+<text x="110.4" y="115.0" fill="#8a93a3" textLength="25.2" lengthAdjust="spacingAndGlyphs">que</text>
+<text x="144.0" y="115.0" fill="#8a93a3" textLength="25.2" lengthAdjust="spacingAndGlyphs">PHP</text>
+<text x="181.8" y="115.0" fill="#8a93a3" text-anchor="middle">u</text>
+<text x="194.4" y="115.0" fill="#8a93a3" textLength="42.0" lengthAdjust="spacingAndGlyphs">otros</text>
+<text x="244.8" y="115.0" fill="#8a93a3" textLength="75.6" lengthAdjust="spacingAndGlyphs">programas</text>
+<text x="328.8" y="115.0" fill="#8a93a3" textLength="16.8" lengthAdjust="spacingAndGlyphs">se</text>
+<text x="354.0" y="115.0" fill="#8a93a3" textLength="67.2" lengthAdjust="spacingAndGlyphs">conecten</text>
+<text x="429.6" y="115.0" fill="#8a93a3" textLength="33.6" lengthAdjust="spacingAndGlyphs">como</text>
+<text x="475.8" y="115.0" fill="#8a93a3" text-anchor="middle">a</text>
+<text x="488.4" y="115.0" fill="#8a93a3" textLength="25.2" lengthAdjust="spacingAndGlyphs">una</text>
+<text x="522.0" y="115.0" fill="#8a93a3" textLength="33.6" lengthAdjust="spacingAndGlyphs">base</text>
+<text x="564.0" y="115.0" fill="#8a93a3" textLength="42.0" lengthAdjust="spacingAndGlyphs">MySQL</text>
+<text x="614.4" y="115.0" fill="#8a93a3" textLength="50.4" lengthAdjust="spacingAndGlyphs">común.</text>
+<text x="51.6" y="151.0" fill="#545868" textLength="75.6" lengthAdjust="spacingAndGlyphs">Dirección</text>
+<text x="160.8" y="151.0" fill="#545868" textLength="75.6" lengthAdjust="spacingAndGlyphs">127.0.0.1</text>
+<text x="51.6" y="169.0" fill="#545868" textLength="50.4" lengthAdjust="spacingAndGlyphs">Puerto</text>
+<text x="160.8" y="169.0" fill="#545868" textLength="42.0" lengthAdjust="spacingAndGlyphs">43977</text>
+<text x="51.6" y="187.0" fill="#545868" textLength="58.8" lengthAdjust="spacingAndGlyphs">Usuario</text>
+<text x="160.8" y="187.0" fill="#545868" textLength="50.4" lengthAdjust="spacingAndGlyphs">access</text>
+<text x="51.6" y="205.0" fill="#545868" textLength="84.0" lengthAdjust="spacingAndGlyphs">Contraseña</text>
+<text x="51.6" y="223.0" fill="#8a93a3" textLength="33.6" lengthAdjust="spacingAndGlyphs">Base</text>
+<text x="160.8" y="223.0" fill="#e8ecf2" font-weight="bold" textLength="75.6" lengthAdjust="spacingAndGlyphs">northwind</text>
+<text x="253.2" y="223.0" fill="#8a93a3" textLength="25.2" lengthAdjust="spacingAndGlyphs">(se</text>
+<text x="286.8" y="223.0" fill="#8a93a3" textLength="42.0" lengthAdjust="spacingAndGlyphs">elige</text>
+<text x="337.2" y="223.0" fill="#8a93a3" textLength="16.8" lengthAdjust="spacingAndGlyphs">al</text>
+<text x="362.4" y="223.0" fill="#8a93a3" textLength="58.8" lengthAdjust="spacingAndGlyphs">generar</text>
+<text x="429.6" y="223.0" fill="#8a93a3" textLength="16.8" lengthAdjust="spacingAndGlyphs">la</text>
+<text x="454.8" y="223.0" fill="#8a93a3" textLength="58.8" lengthAdjust="spacingAndGlyphs">imagen)</text>
+<text x="68.4" y="241.0" fill="#8a93a3" textLength="33.6" lengthAdjust="spacingAndGlyphs">Solo</text>
+<text x="110.4" y="241.0" fill="#8a93a3" textLength="33.6" lengthAdjust="spacingAndGlyphs">esta</text>
+<text x="152.4" y="241.0" fill="#8a93a3" textLength="100.8" lengthAdjust="spacingAndGlyphs">computadora.</text>
+<text x="51.6" y="277.0" fill="#cdd6f4" textLength="58.8" lengthAdjust="spacingAndGlyphs">Detener</text>
+<text x="118.8" y="277.0" fill="#cdd6f4" textLength="67.2" lengthAdjust="spacingAndGlyphs">servidor</text>
+<text x="631.2" y="277.0" fill="#8a93a3" textLength="50.4" lengthAdjust="spacingAndGlyphs">activo</text>
+<text x="51.6" y="295.0" fill="#cdd6f4" textLength="50.4" lengthAdjust="spacingAndGlyphs">Volver</text>
+<text x="55.8" y="331.0" fill="#3fa564" font-weight="bold" text-anchor="middle">●</text>
+<text x="68.4" y="331.0" fill="#3fa564" font-weight="bold" textLength="50.4" lengthAdjust="spacingAndGlyphs">Activo</text>
+<text x="131.4" y="331.0" fill="#8a93a3" text-anchor="middle">·</text>
+<text x="144.0" y="331.0" fill="#8a93a3" textLength="75.6" lengthAdjust="spacingAndGlyphs">conectate</text>
+<text x="228.0" y="331.0" fill="#8a93a3" textLength="25.2" lengthAdjust="spacingAndGlyphs">con</text>
+<text x="261.6" y="331.0" fill="#8a93a3" textLength="25.2" lengthAdjust="spacingAndGlyphs">(la</text>
+<text x="295.2" y="331.0" fill="#8a93a3" textLength="84.0" lengthAdjust="spacingAndGlyphs">contraseña</text>
+<text x="387.6" y="331.0" fill="#8a93a3" textLength="16.8" lengthAdjust="spacingAndGlyphs">es</text>
+<text x="412.8" y="331.0" fill="#8a93a3" textLength="16.8" lengthAdjust="spacingAndGlyphs">la</text>
+<text x="438.0" y="331.0" fill="#8a93a3" textLength="25.2" lengthAdjust="spacingAndGlyphs">que</text>
+<text x="471.6" y="331.0" fill="#8a93a3" textLength="84.0" lengthAdjust="spacingAndGlyphs">elegiste):</text>
+<rect x="51.6" y="336.0" width="622.0" height="18.4" fill="#2b3441"/>
+<text x="60.0" y="349.0" fill="#e8ecf2" textLength="42.0" lengthAdjust="spacingAndGlyphs">mysql</text>
+<text x="110.4" y="349.0" fill="#e8ecf2" textLength="16.8" lengthAdjust="spacingAndGlyphs">-h</text>
+<text x="135.6" y="349.0" fill="#e8ecf2" textLength="75.6" lengthAdjust="spacingAndGlyphs">127.0.0.1</text>
+<text x="219.6" y="349.0" fill="#e8ecf2" textLength="16.8" lengthAdjust="spacingAndGlyphs">-P</text>
+<text x="244.8" y="349.0" fill="#e8ecf2" textLength="42.0" lengthAdjust="spacingAndGlyphs">43977</text>
+<text x="295.2" y="349.0" fill="#e8ecf2" textLength="16.8" lengthAdjust="spacingAndGlyphs">-u</text>
+<text x="320.4" y="349.0" fill="#e8ecf2" textLength="50.4" lengthAdjust="spacingAndGlyphs">access</text>
+<text x="379.2" y="349.0" fill="#e8ecf2" textLength="16.8" lengthAdjust="spacingAndGlyphs">-p</text>
+<text x="404.4" y="349.0" fill="#e8ecf2" textLength="75.6" lengthAdjust="spacingAndGlyphs">northwind</text>
+<rect x="51.6" y="354.0" width="622.0" height="18.4" fill="#2b3441"/>
+<text x="60.0" y="367.0" fill="#e8ecf2" textLength="537.6" lengthAdjust="spacingAndGlyphs">mysql:host=127.0.0.1;port=43977;dbname=northwind;charset=utf8mb4</text>
+<text x="160.8" y="475.0" fill="#c8a249" font-weight="bold" textLength="25.2" lengthAdjust="spacingAndGlyphs">↑/↓</text>
+<text x="194.4" y="475.0" fill="#8a93a3" textLength="42.0" lengthAdjust="spacingAndGlyphs">mover</text>
+<text x="249.0" y="475.0" fill="#8a93a3" text-anchor="middle">·</text>
+<text x="261.6" y="475.0" fill="#c8a249" font-weight="bold" textLength="109.2" lengthAdjust="spacingAndGlyphs">Enter/Espacio</text>
+<text x="379.2" y="475.0" fill="#8a93a3" textLength="50.4" lengthAdjust="spacingAndGlyphs">elegir</text>
+<text x="442.2" y="475.0" fill="#8a93a3" text-anchor="middle">·</text>
+<text x="454.8" y="475.0" fill="#c8a249" font-weight="bold" textLength="25.2" lengthAdjust="spacingAndGlyphs">Esc</text>
+<text x="488.4" y="475.0" fill="#8a93a3" textLength="50.4" lengthAdjust="spacingAndGlyphs">volver</text>
+</g></svg>

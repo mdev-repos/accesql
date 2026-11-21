@@ -1,187 +1,162 @@
-# access2mysql_golang
+<p align="center">
+  <img src="internal/web/static/logo.svg" width="128" alt="Logo de Accesql: un cilindro de base de datos con una flecha dorada">
+</p>
 
-Herramienta de línea de comandos para leer bases Microsoft Access
-(`.accdb` / `.mdb`) y exportarlas a JSON. Ejecutable único, sin JVM ni ODBC.
-Pensada para que sistemas legacy en Access puedan alimentar a otras
-aplicaciones (PHP, etc.) con JSON.
+<h1 align="center">Accesql</h1>
 
-> Estado: MVP. Comandos: `dump`, `query`, `serve`, `ui` (interfaz de terminal) y
-> `web` (interfaz gráfica en el navegador, ya conectada a todas las funciones).
-> Ejecutado **sin argumentos** abre un menú de terminal que por ahora es solo una
-> **maqueta** (aspecto y navegación, sin funcionalidad): se conectará a la misma
-> capa que usa la web.
+<p align="center">
+  <b>Convierte bases de Microsoft Access a MySQL.</b><br>
+  Un solo ejecutable, sin Access, sin ODBC y sin Java. Solo lectura.
+</p>
 
-## Compilar
+<p align="center">
+  <img alt="Versión 0.1.0" src="https://img.shields.io/badge/versi%C3%B3n-0.1.0-c8a24a">
+  <img alt="Go 1.26 o superior" src="https://img.shields.io/badge/Go-1.26%2B-00ADD8">
+  <img alt="Linux y Windows" src="https://img.shields.io/badge/plataformas-Linux%20%7C%20Windows-1b4476">
+  <img alt="Sin dependencias de C" src="https://img.shields.io/badge/CGO-desactivado-2a5a94">
+  <img alt="Estado: MVP" src="https://img.shields.io/badge/estado-MVP-8a94a3">
+</p>
 
-Requiere Go >= 1.26 (lo exige la librería `mdbgo`; con Go 1.21+ la toolchain
-se descarga sola).
+<p align="center">
+  <a href="#qué-es-accesql">Qué es</a> ·
+  <a href="#funcionalidades">Funcionalidades</a> ·
+  <a href="#instalación">Instalación</a> ·
+  <a href="#cómo-se-usa">Cómo se usa</a> ·
+  <a href="#documentación">Documentación</a> ·
+  <a href="#estado-del-proyecto">Estado</a>
+</p>
 
-```bash
-CGO_ENABLED=0 go build -o bin/access-tool ./cmd/access-tool
-# Windows, desde Linux:
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o bin/access-tool.exe ./cmd/access-tool
-```
+---
 
-## Uso
+## Qué es Accesql
 
-```bash
-# Una tabla por stdout
-access-tool dump --file testdb/Northwind.accdb --table Products
+**Accesql** lee archivos de Microsoft Access (`.accdb` y `.mdb`) y los ofrece de las formas que hoy se
+necesitan: como un **servidor MySQL** al que se conecta cualquier programa, como **JSON**, y como
+**scripts SQL de MySQL** para migrar los datos a una base de verdad.
 
-# Todas las tablas: un <tabla>.json por tabla en la carpeta indicada
-access-tool dump --file testdb/Northwind.accdb --out salida/
-```
+Es un único ejecutable escrito en Go, sin dependencias: no hace falta tener Access instalado, ni
+controladores ODBC, ni Java. Corre en Linux y en Windows, incluso en un servidor sin escritorio.
 
-Los mensajes informativos van a stderr; el JSON, a stdout.
+> **Nunca modifica tu archivo de Access.** Lee una copia en memoria (la «imagen») y trabaja siempre
+> en modo solo lectura.
 
-### Consultas SQL
+### Para qué sirve
 
-`query` carga el archivo en un motor SQL en memoria
-([go-mysql-server](https://github.com/dolthub/go-mysql-server)) y ejecuta la
-consulta con dialecto MySQL: JOIN, GROUP BY, subconsultas, etc. (algo que el
-SQL propio del lector de Access no soporta). Las columnas salen en el orden
-del `SELECT`.
+- **Seguir usando un sistema viejo hecho en Access** mientras otras aplicaciones (PHP, por ejemplo) leen
+  sus datos como si fuera una base MySQL común, sin tocar ni migrar nada.
+- **Migrar de Access a MySQL**: crear la base completa con sus tablas, tipos, claves y relaciones, o sumar
+  los registros a tablas que ya existen.
+- **Explorar y consultar** una base de Access con SQL moderno (`JOIN`, `GROUP BY`, subconsultas) sin abrir
+  Access, y exportar el resultado a JSON, CSV o SQL.
+- **Ver cómo está armada** una base heredada: tablas, columnas y las relaciones reales entre ellas.
 
-```bash
-access-tool query -f testdb/Northwind.accdb -q \
-  'SELECT c.Company, COUNT(*) AS pedidos
-     FROM Customers c JOIN Orders o ON o.`Customer ID` = c.ID
-    GROUP BY c.Company ORDER BY pedidos DESC LIMIT 3'
-```
+## Funcionalidades
 
-Nombres con espacios o símbolos (`Order Details`, `Country/Region`) van entre
-comillas invertidas. Los datos son una foto de solo lectura: cualquier
-escritura SQL afecta solo la copia en memoria, nunca el `.accdb`. En `query`
-los Sí/No salen como `0`/`1` (como en MySQL); `dump` los emite `true`/`false`.
+- **Lectura directa** de `.accdb` y `.mdb`, sin Access, ODBC ni Java. Ejecutable único para Linux y Windows.
+- **Solo lectura**, con las funciones de archivos del motor SQL desactivadas
+  (ver [seguridad](docs/seguridad.md)).
+- **Servidor MySQL** integrado: PHP (PDO, mysqli), el cliente `mysql` o cualquier driver se conectan como
+  siempre. Con usuario y contraseña obligatorios.
+- **Consultas SQL con dialecto MySQL**, con exportación a JSON, CSV para Excel y `INSERT`.
+- **Convertir a MySQL**: scripts para crear una base nueva (con claves primarias y `FOREIGN KEY` confirmadas
+  con los datos) o para agregar registros a tablas existentes (otro nombre de tabla, columnas a elegir,
+  qué hacer con los repetidos, transacción). [Detalle](docs/convertir-a-mysql.md).
+- **Diagrama de relaciones** con las relaciones reales definidas en Access.
+- **Dos interfaces que se comportan igual** y comparten la misma base cargada: un menú en la terminal y
+  una página en el navegador.
 
-### Interfaz interactiva (`ui`)
+### Menú en la terminal
 
-```bash
-access-tool ui --file datos.accdb
-```
+Se abre sin argumentos (también con doble clic). Un menú de opciones con el mismo aspecto, la elegida
+resaltada y las que todavía no se pueden usar en gris. Sirve incluso por SSH.
 
-Abre una interfaz de terminal (TUI) para no tener que tipear comandos: lista de
-tablas a la izquierda, editor SQL arriba y grilla de resultados abajo.
+<p align="center">
+  <img src="docs/img/tui-menu.svg" width="700" alt="Menú principal en la terminal, con el logo, el estado de la base y la lista de opciones">
+</p>
 
-| Tecla | Acción |
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/tui-consultas.svg" alt="Pantalla de consultas SQL con el resultado de un JOIN"><br><sub><b>Consultas SQL</b> con grilla desplazable y exportación.</sub></td>
+    <td width="50%"><img src="docs/img/tui-diagrama.svg" alt="Árbol de tablas con columnas y relaciones"><br><sub><b>Diagrama</b> como árbol de tablas, columnas y relaciones.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/img/tui-convertir.svg" alt="Script SQL generado para crear una base de datos MySQL"><br><sub><b>Convertir a MySQL</b>: el script generado, listo para guardar.</sub></td>
+    <td width="50%"><img src="docs/img/tui-servidor.svg" alt="Servidor MySQL activo con el comando de conexión"><br><sub><b>Servidor MySQL</b> con el comando de conexión.</sub></td>
+  </tr>
+</table>
+
+### Interfaz gráfica en el navegador
+
+Una sola pantalla, de arriba hacia abajo: abrir la base, generar la imagen y, a partir de ahí, lo que
+haga falta. **Solo el primer bloque está activo hasta generar la imagen; el resto es opcional.** Todo
+va dentro del ejecutable: sin internet, sin CDN.
+
+<p align="center">
+  <img src="docs/img/gui-imagen.jpg" width="700" alt="Interfaz web: base abierta, imagen MySQL generada y servidor MySQL en marcha">
+</p>
+
+| | |
 |---|---|
-| `↑` `↓` + `Enter` (en Tablas) | ver las primeras 100 filas de la tabla |
-| `s` (en Tablas) | ver la estructura (`DESCRIBE`) |
-| `Tab` / `Shift+Tab` | cambiar de panel |
-| `Ctrl+R` | ejecutar el SQL del editor |
-| `←` `→` `↑` `↓` `PgUp` `PgDn` `Home` `End` (en la grilla) | recorrer el resultado |
-| `Ctrl+S` | guardar el resultado como `resultado-AAAAMMDD-HHMMSS.json` |
-| `Ctrl+C` | salir |
+| <img src="docs/img/gui-consultas.jpg" alt="Consultas SQL con un JOIN y su resultado en una tabla"><br><sub><b>Consultas SQL</b> y exportación a JSON, CSV o SQL.</sub> | <img src="docs/img/gui-convertir.jpg" alt="Convertir a MySQL con las opciones y el script generado"><br><sub><b>Convertir a MySQL</b> con vista previa y descarga del script.</sub> |
+| <img src="docs/img/gui-diagrama.jpg" alt="Diagrama de relaciones de la base de ejemplo con una tabla resaltada"><br><sub><b>Diagrama de relaciones</b>: un clic en una tabla resalta las suyas.</sub> | <img src="docs/img/gui-inicio.jpg" alt="Primer bloque: archivo elegido y nombre de la base MySQL"><br><sub><b>Primer paso</b>: elegir el archivo y el nombre de la base.</sub> |
 
-Muestra hasta 1.000 filas por consulta (avisa si hay más) para que un
-`SELECT *` sobre una tabla enorme no cuelgue la pantalla. Trabaja sobre una
-foto de solo lectura, igual que `query`. Una consulta en curso no se puede
-cancelar. Necesita una terminal de al menos 60x16.
+Los cinco bloques son: **Base de datos** (explorador de carpetas, generar la imagen con progreso),
+**Servidor MySQL**, **Consultas SQL**, **Convertir a MySQL** y **Diagrama de relaciones**.
 
-### Interfaz gráfica en el navegador (`web`)
+## Instalación
+
+Accesql es un único ejecutable. No necesita instalación.
+
+**Binarios precompilados.** La idea es adjuntar los ejecutables para Linux y Windows a cada versión en
+la pestaña *Releases* del repositorio. *Todavía no hay versiones publicadas*: por ahora, compilá desde el
+código fuente.
+
+**Compilar desde el código fuente.** Requiere [Go](https://go.dev/dl/) 1.26 o superior. No hace falta
+compilador de C.
 
 ```bash
-access-tool web --open                 # elegís el archivo desde la página
-access-tool web -f datos.accdb --open  # o lo dejás preseleccionado
+git clone https://github.com/mdev-repos/access2mysql_golang.git
+cd access2mysql_golang
+
+# Linux
+CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/access-tool ./cmd/access-tool
+
+# Windows (también desde Linux)
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/access-tool.exe ./cmd/access-tool
 ```
 
-Levanta una página local (**Accesql**: gris, azul y dorado; también funciona en
-el celular) para quien prefiera no usar la terminal. Va **dentro del
-ejecutable**: HTML, CSS y JavaScript sin librerías, sin CDN y sin internet.
-Al iniciar imprime un enlace del estilo `http://127.0.0.1:8080/#t=<token>`;
-`--open` lo abre solo. Es una sola pantalla con bloques que se habilitan en
-orden: solo el primero está activo hasta generar la imagen.
+> En Windows el ejecutable compila, pero todavía no se probó en una máquina Windows real.
 
-1. **Base de datos:** explorador de carpetas propio (muestra solo `.accdb` y
-   `.mdb`), nombre de la base MySQL (por defecto, el del archivo) y **Generar
-   imagen MySQL** con barra de progreso y botón Cancelar. Se puede descargar toda
-   la base como un JSON.
-2. **Servidor MySQL** *(opcional)*: expone la imagen por el protocolo MySQL con
-   dirección, puerto, usuario y contraseña (obligatoria), y se inicia y detiene
-   desde la página. Muestra el comando `mysql` y el DSN de PHP para copiar.
-3. **Consultas SQL** *(opcional)*: editor (`Ctrl+Enter` ejecuta), lista de
-   tablas y resultado en tabla. Exporta lo consultado a **JSON, CSV** (separado
-   por `;` y con BOM, para que Excel en español lo abra bien) o **SQL** (`INSERT`).
-   Las exportaciones traen todas las filas (hasta 1.000.000), no solo las visibles.
-4. **Convertir a MySQL** *(opcional)*: genera un script `.sql`.
-   - *Crear una base nueva:* `CREATE DATABASE`, tablas con tipos de MySQL, datos
-     y, si se pide, claves primarias y `FOREIGN KEY`.
-   - *Agregar datos a tablas que ya existen:* solo `INSERT`, con otro nombre de
-     tabla si hace falta, qué hacer con los registros repetidos (omitir,
-     actualizar o reemplazar) y transacción opcional. Si la tabla de MySQL tiene
-     menos columnas, se pegan las que tiene y solo se copian las que coinciden.
-   - El script se ve en pantalla (vista previa de hasta 128 KB) y se descarga
-     completo.
-5. **Diagrama de relaciones** *(opcional)*: tablas, columnas y las **relaciones
-   reales definidas en Access** (las lee de la tabla interna `MSysRelationships`),
-   con las claves marcadas. Un clic en una tabla resalta las suyas.
+## Cómo se usa
 
-Cómo se arman los scripts:
+El ejecutable se llama `access-tool`. Elegí la forma que te convenga.
 
-- **Claves primarias:** Access no las expone por esta vía. Se deducen de las
-  columnas que otra tabla referencia en una relación, o de una columna llamada
-  `ID` / `<tabla> ID`, y **solo se declaran si los datos las confirman** (sin
-  vacíos ni repetidos, comparando como MySQL: sin distinguir mayúsculas ni
-  acentos).
-- **Claves foráneas:** solo las relaciones para las que Access exigía integridad
-  referencial y cuyas columnas tienen el mismo tipo. El resto se avisa en el
-  encabezado del script (`-- AVISO:`). Se crean con las comprobaciones
-  desactivadas durante la carga, para que datos viejos con registros huérfanos
-  no hagan fallar el script.
-- **Tipos (Access → MySQL):** Booleano → `TINYINT(1)`, Byte → `TINYINT UNSIGNED`,
-  Entero → `SMALLINT`, Entero largo → `INT`, Complex → `BIGINT`, Simple → `FLOAT`,
-  Doble → `DOUBLE`, Moneda → `DECIMAL(19,4)`, Numérico → `DECIMAL(38,s)` (con los
-  decimales que muestran los datos), Fecha/hora → `DATETIME`, Binario y OLE →
-  `LONGBLOB`, Id. de réplica → `CHAR(38)`, Texto(n) → `VARCHAR(n)` (el largo
-  declarado en Access) y Memo/Hipervínculo → `LONGTEXT`. Si una tabla tiene tantas
-  columnas de texto que no entra en una fila de MySQL (65.535 bytes), las más
-  anchas pasan a `TEXT`. Una "Autonumeración" sale como `INT` común (Access no la
-  distingue por esta vía).
-- **Texto:** los valores se escapan (comillas, barras, saltos de línea) y las
-  fechas salen sin zona horaria.
+### 1. Con el menú de la terminal
 
-Seguridad (una página que ejecuta SQL, explora carpetas y abre un puerto es una
-superficie de ataque):
+```bash
+access-tool                    # o doble clic en el ejecutable
+access-tool -f datos.accdb     # con la base ya elegida
+```
 
-- Escucha solo en `127.0.0.1`. La imagen es de solo lectura, con las funciones
-  de archivos del motor deshabilitadas (`LOAD_FILE`, `INTO OUTFILE`, `LOAD DATA`).
-- Todas las rutas `/api/` exigen un **token aleatorio** de 128 bits. Va en el
-  fragmento `#t=` del enlace, que el navegador no envía al servidor ni incluye
-  en el `Referer`, y la página lo saca de la barra de direcciones al cargar. Sin
-  el token, la API responde 401. Quien lo tiene puede explorar las carpetas del
-  equipo y abrir un puerto MySQL: tratarlo como una contraseña.
-- Se valida la cabecera `Host` (defensa contra *DNS rebinding*) y el `Origin`,
-  y una política CSP impide cargar scripts o estilos externos.
-- Los CSV neutralizan la *inyección de fórmulas*: un texto que empieza con
-  `=`, `+`, `-` o `@` se exporta con una comilla delante.
-- El servidor MySQL integrado exige contraseña, y al detenerlo se borra su
-  usuario (reiniciarlo con otra clave no deja valer la anterior).
-- `--host 0.0.0.0` expone la interfaz a la red **sin cifrado** (HTTP): usar solo
-  en redes de confianza o por un túnel SSH/VPN.
+Recorré las opciones con `↑`/`↓`, `Enter` para elegir y `Esc` para volver.
+Necesita una terminal de al menos 80×24.
 
-Limitaciones: la pantalla muestra los números como números de JavaScript (pierden
-precisión a partir de ~15 dígitos significativos; las exportaciones son exactas);
-el nombre de la base MySQL se elige al generar la imagen y no se puede cambiar
-después; las consultas se ejecutan de a una por vez y no se pueden cancelar; el
-servidor MySQL integrado no tiene TLS; los scripts se probaron contra MariaDB 10.11
-(no contra MySQL 8) y con bases chicas: el tiempo de deducir claves en tablas de
-millones de filas está sin medir. La opción `--reload-every` pertenece a `serve`;
-en la página, para refrescar los datos se vuelve a **Generar imagen**.
+### 2. Con la interfaz gráfica
 
-### Servidor MySQL (`serve`)
+```bash
+access-tool web --open
+```
 
-`serve` expone el Access como si fuera un servidor MySQL, de modo que las
-aplicaciones (PHP con PDO/mysqli, etc.) se conectan con su driver de siempre.
-Es de **solo lectura**: INSERT/UPDATE/DELETE devuelven un error claro.
+Se abre el navegador con la página. El programa imprime un enlace con un token (`…/#t=…`): es la llave de
+acceso, tratalo como una contraseña. También se puede abrir desde el menú de la terminal
+(*Abrir interfaz gráfica*), compartiendo la misma base ya cargada.
+
+### 3. Como servidor MySQL para otras aplicaciones
 
 ```bash
 export ACCESS_TOOL_PASSWORD='una-clave-larga'
 access-tool serve --file datos.accdb --port 3306
-# opciones: --host (127.0.0.1), --user (access), --database (access),
-#           --reload-every 5m (recarga el archivo si cambió)
 ```
-
-Desde PHP:
 
 ```php
 $pdo = new PDO('mysql:host=127.0.0.1;port=3306;dbname=access;charset=utf8mb4',
@@ -190,137 +165,71 @@ $filas = $pdo->query('SELECT * FROM Clientes LIMIT 10')->fetchAll(PDO::FETCH_ASS
 echo json_encode($filas);
 ```
 
-Seguridad:
+### 4. Para scripts: JSON y consultas por línea de comandos
 
-- Escucha solo en `127.0.0.1` por defecto y exige usuario y contraseña (se
-  pasa por la variable `ACCESS_TOOL_PASSWORD`, mejor que `--password`, que
-  queda visible en la lista de procesos). Sin contraseña no arranca.
-- **No hay cifrado (TLS).** Si las apps están en otra máquina, no usar
-  `--host 0.0.0.0` a través de una red no confiable: conectar por un túnel SSH
-  o una VPN.
-- Las funciones de archivos del motor (`LOAD_FILE`, `INTO OUTFILE`,
-  `LOAD DATA`) están deshabilitadas: de lo contrario, un cliente autenticado
-  (o una inyección SQL en una app) podría leer o crear archivos del servidor.
-- Es una foto del archivo. Con `--reload-every 5m` el servidor revisa su fecha
-  y tamaño cada 5 minutos y, si cambió (y lleva más de 2 s sin tocarse, por si
-  Access lo está escribiendo), lo recarga. **Durante la recarga las consultas se
-  pausan** (duran decenas de milisegundos con Northwind; con bases grandes será
-  proporcional) y luego siguen con los datos nuevos, incluidas las sentencias
-  preparadas abiertas. Para no duplicar la memoria se reemplaza tabla por tabla
-  (el pico extra es el de la tabla más grande). Si el archivo está corrupto, el
-  error se registra, el servidor sigue con los datos anteriores y reintenta en
-  el próximo ciclo; si falla a mitad, pueden quedar unas tablas nuevas y otras
-  viejas hasta el reintento. Sin `--reload-every`, hay que reiniciar para
-  recargar. Se apaga limpiamente con Ctrl+C o SIGTERM.
+```bash
+# Una tabla, o todas, como JSON
+access-tool dump --file datos.accdb --table Products
+access-tool dump --file datos.accdb --out salida/
 
-## Conversión de tipos
+# Una consulta SQL (dialecto MySQL)
+access-tool query -f datos.accdb -q 'SELECT COUNT(*) AS clientes FROM Customers'
+```
 
-| Access | JSON |
+### Migrar a MySQL, paso a paso
+
+1. Abrí la base (menú o página) y **generá la imagen**.
+2. Entrá a **Convertir a MySQL** y elegí *Crear una base nueva* (o *Agregar datos a tablas que ya existen*).
+3. Revisá el script en pantalla y **guardalo**.
+4. Ejecutalo en tu servidor: `mysql -u root -p < northwind.sql`.
+
+Más opciones y cómo se arman los scripts: [Convertir a MySQL](docs/convertir-a-mysql.md).
+
+### Preguntas frecuentes
+
+- **¿Modifica mi archivo de Access?** No. Es de solo lectura y trabaja con una copia en memoria.
+- **¿Necesito Access instalado?** No, ni ODBC ni Java.
+- **¿Qué pasa si el archivo cambia?** La imagen es una foto. Con el menú o la página se vuelve a generar;
+  `serve` puede recargarse solo con `--reload-every`.
+- **¿Qué tamaño de base soporta?** Se copia entera a memoria RAM. Con bases grandes todavía no se midió el
+  consumo ni los tiempos: probalo con tu archivo antes de depender de él.
+- **¿Funcionan las imágenes y objetos OLE?** Todavía no: ver [limitaciones](docs/tipos-y-limitaciones.md).
+
+## Documentación
+
+| Documento | Contenido |
 |---|---|
-| Texto, Memo | string |
-| Entero, Largo, Byte | número |
-| Doble, Simple, Moneda | número |
-| Numeric (decimal) | número, con los decimales exactos (`100.0000`) |
-| Sí/No | `true` / `false` |
-| Fecha/Hora | string sin zona horaria: `2006-01-15T00:00:00` |
-| Nulo | `null` |
+| [Referencia de comandos](docs/comandos.md) | todas las opciones de `dump`, `query`, `serve`, `web` y el menú |
+| [Convertir a MySQL](docs/convertir-a-mysql.md) | los dos modos, tipos, claves, relaciones y compatibilidad |
+| [Seguridad](docs/seguridad.md) | modelo de seguridad y sus límites |
+| [Tipos y limitaciones](docs/tipos-y-limitaciones.md) | conversión a JSON, comparación de texto, lo que todavía no funciona |
+| [Desarrollo](docs/desarrollo.md) | compilar, tests, estructura del proyecto, cómo contribuir |
 
-Access guarda las fechas sin zona horaria, por eso no se les agrega una.
+## Estado del proyecto
 
-En `query` y `serve` el texto se compara **sin distinguir mayúsculas** (como
-Access y como el MySQL 8 por defecto: `utf8mb4_0900_ai_ci`), por lo que
-`WHERE Nombre = 'perez'` encuentra `Pérez`... y también `Perez`, porque esa
-collation ignora los acentos. Si se prefiere distinguir acentos, cambiar a
-`utf8mb4_0900_as_ci` en `internal/engine/types.go`.
+**Versión 0.1.0, MVP en pruebas.** Las funciones principales están completas y probadas con la base de
+ejemplo *Northwind* (tests automáticos, PHP 8.3 real, el cliente `mysql` y scripts ejecutados en un
+MariaDB real). Lo que todavía falta, con total honestidad:
 
-## Limitaciones conocidas
+- Probar en Windows y con **MySQL 8**, y medir memoria y tiempos con **bases grandes**.
+- Las columnas **OLE** (imágenes y objetos incrustados) no se leen bien (defecto de una dependencia).
+- Ejecutables publicados para Linux y Windows.
 
-### Columnas OLE / binarias (imágenes, objetos incrustados)
+## Contribuir
 
-Actualmente las columnas de tipo **OLE** (por ejemplo `Categories.Picture` y
-`Employees.Photo` en `Northwind.MDB`) **no se exportan correctamente**: el
-driver `mdbgo` (v0.0.12) las declara como binarias pero entrega apenas 2 bytes
-sin sentido en lugar del contenido. `mdb-json` (mdbtools) sí devuelve el
-contenido completo, por lo que el defecto está en `mdbgo` y no en los datos.
-Las demás columnas del archivo no se ven afectadas.
+Se agradecen los reportes de errores, las pruebas con bases reales y las mejoras. Antes de enviar un
+cambio: `gofmt -l .`, `go vet ./...` y `go test ./...` deben pasar. Más en [Desarrollo](docs/desarrollo.md).
 
-De ser necesario, se puede resolver de estas formas:
+## Licencia
 
-- **A. Reportar el problema a `mdbgo`** y actualizar cuando se corrija. Es la
-  opción más barata, pero depende de terceros.
-- **B. Usar el driver CGo de `mdbgo` (`cmdb`)**, basado en el código C original
-  de mdbtools, solo para leer esas columnas. Requiere un compilador C
-  (`zig cc` es lo recomendado) al compilar, y el binario deja de ser Go puro.
-- **C. Corregir el manejo de OLE en `mdbgo`** (fork o contribución upstream).
-  Máximo control, pero es el esfuerzo mayor.
+*Pendiente de definir.* Hasta que se publique una licencia, todos los derechos están reservados.
 
-### Otras
+## Créditos
 
-- **Campos "Complex" de Access** (adjuntos, listas multivalor): se exporta
-  solo un entero (por ejemplo `Attachments: 3`), no el contenido.
-- **Sin índices ni claves en `query`:** no se cargan los índices de Access, por
-  lo que los JOIN sobre tablas muy grandes pueden ser lentos.
-- **Probado con** el cliente `mysql` (MariaDB), el driver Go `go-sql-driver` y
-  **PHP 8.3 real** (PDO con preparadas emuladas y nativas, y mysqli):
-  `scripts/php_smoke_test.php` (35 comprobaciones: tipos, acentos, solo
-  lectura, autenticación, aislamiento de archivos, conexiones repetidas).
-- **Un solo usuario** y sin TLS.
-- **Memoria:** `query` y `serve` copian toda la base a RAM al arrancar y el binario pesa
-  ~57 MB. Consumo y tiempos con bases grandes: sin medir.
-- **Solo lectura** y como foto del archivo en el momento de la lectura.
-
-## Verificación contra mdbtools
-
-`scripts/compare_mdbtools.py` compara la salida de `dump` contra `mdb-json`
-fila por fila (requiere `mdbtools` y Python 3):
-
-```bash
-python3 -I scripts/compare_mdbtools.py bin/access-tool testdb/Northwind.accdb
-```
-
-Resultado actual: el `.accdb` coincide en todas sus 511 filas; el `.MDB`
-coincide salvo las columnas OLE descritas arriba.
-
-## Bases de prueba
-
-`testdb/` no se versiona (está en `.gitignore`). Para probar, descargá la base
-de ejemplo Northwind (`.accdb` y/o `.mdb`) y dejala en `testdb/`. En uso real,
-cada usuario apunta `--file` a su propia base Access.
-
-## Nota técnica: caché de archivos de mdbgo
-
-`mdbgo` conserva en RAM una copia completa de cada `.accdb` que abre (hasta
-512 MB) y no la libera al cerrar. Como los datos ya se copian al motor SQL,
-eso sería memoria duplicada permanente (medido: 20 aperturas de un archivo de
-3,7 MB dejaban ~70 MB retenidos). `internal/access/nocache.go` lo desactiva
-con `//go:linkname`, porque la variable está en un paquete `internal` de
-`mdbgo`. Es frágil: si una versión futura de `mdbgo` la renombra, el programa
-dejará de compilar (falla ruidosamente). Lo ideal es pedir en `mdbgo` una
-opción pública.
-
-## Tests
-
-```bash
-go test ./...                                   # sesión, scripts MySQL, exportaciones, web (token, host, origen, aislamiento) y TUI
-ACCESQL_MYSQL_ARGS="--socket=/tmp/x.sock -uroot" go test ./internal/session -run RealMySQL -v   # ejecuta los scripts en un MySQL/MariaDB real
-python3 -I scripts/compare_mdbtools.py bin/access-tool testdb/Northwind.accdb
-php scripts/php_smoke_test.php 127.0.0.1 3307 access secreta   # con `serve` corriendo
-```
-
-## Estructura del proyecto
-
-```
-cmd/access-tool/     punto de entrada (main), sin lógica
-internal/cli/        comandos cobra (root, dump, query, serve, ui, web)
-internal/access/     lectura de Access (envuelve mdbgo)
-internal/engine/     motor SQL en memoria (go-mysql-server) cargado desde Access
-internal/session/    estado y operaciones compartidas por las interfaces (abrir, generar, consultar, servidor, esquema, exportar, scripts, explorador)
-internal/export/     resultado → JSON / CSV / INSERT
-internal/migrate/    base Access → script MySQL (base nueva / agregar a tablas existentes)
-internal/version/    versión de la aplicación
-internal/tui/        interfaz de terminal (bubbletea); app/ es el menú principal (maqueta)
-internal/web/        servidor HTTP + interfaz gráfica embebida (static/)
-internal/jsonout/    JSON con orden de columnas conservado
-scripts/             verificación (mdbtools, PHP)
-testdb/              bases de prueba locales (Northwind); NO se versiona
-```
+Accesql se apoya en proyectos abiertos:
+[mdbgo](https://github.com/Felamande/mdbgo) (lectura de Access en Go puro),
+[go-mysql-server](https://github.com/dolthub/go-mysql-server) (motor SQL con dialecto MySQL),
+[Bubble Tea, Lip Gloss y Bubbles](https://github.com/charmbracelet) (menú de la terminal),
+[Cobra](https://github.com/spf13/cobra) (línea de comandos) y
+[mdbtools](https://github.com/mdbtools/mdbtools) (referencia para verificar la lectura).
+La base de ejemplo *Northwind* es de Microsoft y no se distribuye con este repositorio.

@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="708" height="492" viewBox="0 0 708 492" role="img" aria-label="accesql">
+<rect width="708" height="492" rx="10" fill="#1e1e2e"/>
+<path d="M0 10a10 10 0 0 1 10-10h688a10 10 0 0 1 10 10v24H0z" fill="#181825"/>
+<circle cx="20" cy="17" r="6" fill="#f38ba8"/><circle cx="40" cy="17" r="6" fill="#f9e2af"/><circle cx="60" cy="17" r="6" fill="#a6e3a1"/>
+<text x="354" y="22" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#a6adc8">accesql</text>
+<g font-family="DejaVu Sans Mono, Menlo, Consolas, Liberation Mono, monospace" font-size="14" xml:space="preserve">
+<rect x="26.4" y="48.0" width="655.6" height="18.4" fill="#1b4476"/>
+<text x="34.8" y="61.0" fill="#ffffff" font-weight="bold" textLength="58.8" lengthAdjust="spacingAndGlyphs">Accesql</text>
+<text x="106.2" y="61.0" fill="#ffffff" font-weight="bold" text-anchor="middle">›</text>
+<text x="118.8" y="61.0" fill="#ffffff" font-weight="bold" textLength="50.4" lengthAdjust="spacingAndGlyphs">Script</text>
+<text x="177.6" y="61.0" fill="#ffffff" font-weight="bold" textLength="25.2" lengthAdjust="spacingAndGlyphs">SQL</text>
+<text x="211.2" y="61.0" fill="#ffffff" font-weight="bold" textLength="67.2" lengthAdjust="spacingAndGlyphs">generado</text>
+<text x="26.4" y="79.0" fill="#c8a249" textLength="655.2" lengthAdjust="spacingAndGlyphs">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</text>
+<text x="26.4" y="97.0" fill="#8a93a3" textLength="25.2" lengthAdjust="spacingAndGlyphs">892</text>
+<text x="60.0" y="97.0" fill="#8a93a3" textLength="50.4" lengthAdjust="spacingAndGlyphs">líneas</text>
+<text x="123.0" y="97.0" fill="#8a93a3" text-anchor="middle">·</text>
+<text x="135.6" y="97.0" fill="#8a93a3" textLength="75.6" lengthAdjust="spacingAndGlyphs">mostrando</text>
+<text x="219.6" y="97.0" fill="#8a93a3" textLength="58.8" lengthAdjust="spacingAndGlyphs">132–143</text>
+<rect x="26.4" y="102.0" width="655.6" height="18.4" fill="#2b3441"/>
+<text x="34.8" y="115.0" fill="#e8ecf2" textLength="16.8" lengthAdjust="spacingAndGlyphs">--</text>
+<text x="60.0" y="115.0" fill="#e8ecf2" textLength="42.0" lengthAdjust="spacingAndGlyphs">Tabla</text>
+<text x="110.4" y="115.0" fill="#e8ecf2" textLength="50.4" lengthAdjust="spacingAndGlyphs">Orders</text>
+<text x="169.2" y="115.0" fill="#e8ecf2" textLength="25.2" lengthAdjust="spacingAndGlyphs">(48</text>
+<text x="202.8" y="115.0" fill="#e8ecf2" textLength="50.4" lengthAdjust="spacingAndGlyphs">filas)</text>
+<rect x="26.4" y="120.0" width="655.6" height="18.4" fill="#2b3441"/>
+<text x="34.8" y="133.0" fill="#e8ecf2" textLength="16.8" lengthAdjust="spacingAndGlyphs">--</text>
+<text x="60.0" y="133.0" fill="#e8ecf2" textLength="42.0" lengthAdjust="spacingAndGlyphs">clave</text>
+<text x="110.4" y="133.0" fill="#e8ecf2" textLength="67.2" lengthAdjust="spacingAndGlyphs">primaria</text>
+<text x="186.0" y="133.0" fill="#e8ecf2" textLength="67.2" lengthAdjust="spacingAndGlyphs">deducida</text>
+<text x="261.6" y="133.0" fill="#e8ecf2" textLength="25.2" lengthAdjust="spacingAndGlyphs">de:</text>
+<text x="295.2" y="133.0" fill="#e8ecf2" textLength="67.2" lengthAdjust="spacingAndGlyphs">columnas</text>
+<text x="370.8" y="133.0" fill="#e8ecf2" textLength="109.2" lengthAdjust="spacingAndGlyphs">referenciadas</text>
+<text x="488.4" y="133.0" fill="#e8ecf2" textLength="25.2" lengthAdjust="spacingAndGlyphs">por</text>
+<text x="522.0" y="133.0" fill="#e8ecf2" textLength="16.8" lengthAdjust="spacingAndGlyphs">la</text>
+<text x="547.2" y="133.0" fill="#e8ecf2" textLength="67.2" lengthAdjust="spacingAndGlyphs">relación</text>
+<text x="622.8" y="133.0" fill="#e8ecf2" textLength="50.4" lengthAdjust="spacingAndGlyphs">New_O…</text>
+<rect x="26.4" y="138.0" width="655.6" height="18.4" fill="#2b3441"/>
+<text x="34.8" y="151.0" fill="#e8ecf2" textLength="50.4" lengthAdjust="spacingAndGlyphs">CREATE</text>
+<text x="93.6" y="151.0" fill="#e8ecf2" textLength="42.0" lengthAdjust="spacingAndGlyphs">TABLE</text>
+<text x="144.0" y="151.0" fill="#e8ecf2" textLength="67.2" lengthAdjust="spacingAndGlyphs">`Orders`</text>
+<text x="223.8" y="151.0" fill="#e8ecf2" text-anchor="middle">(</text>
+<rect x="26.4" y="156.0" width="655.6" height="18.4" fill="#2b3441"/>
+<text x="51.6" y="169.0" fill="#e8ecf2" textLength="50.4" lengthAdjust="spacingAndGlyphs">`Order</text>
+<text x="110.4" y="169.0" fill="#e8ecf2" textLength="25.2" lengthAdjust="spacingAndGlyphs">ID`</text>
+<text x="144.0" y="169.0" fill="#e8ecf2" textLength="25.2" lengthAdjust="spacingAndGlyphs">INT</text>
+<text x="177.6" y="169.0" fill="#e8ecf2" textLength="25.2" lengthAdjust="spacingAndGlyphs">NOT</text>
+<text x="211.2" y="169.0" fill="#e8ecf2" textLength="42.0" lengthAdjust="spacingAndGlyphs">NULL,</text>
+<rect x="26.4" y="174.0" width="655.6" height="18.4" fill="#2b3441"/>
+<text x="51.6" y="187.0" fill="#e8ecf2" textLength="445.2" lengthAdjust="spacingAndGlyphs">`VersionHistory_F5F8918F-0A3F-4DA9-AE71-184EE5012880`</text>
+<text x="505.2" y="187.0" fill="#e8ecf2" textLength="58.8" lengthAdjust="spacingAndGlyphs">BIGINT,</text>
+<rect x="26.4" y="192.0" width="655.6" height="18.4" fill="#2b3441"/>
+<text x="51.6" y="205.0" fill="#e8ecf2" textLength="75.6" lengthAdjust="spacingAndGlyphs">`Employee</text>
+<text x="135.6" y="205.0" fill="#e8ecf2" textLength="25.2" lengthAdjust="spacingAndGlyphs">ID`</text>
+<text x="169.2" y="205.0" fill="#e8ecf2" textLength="33.6" lengthAdjust="spacingAndGlyphs">INT,</text>
+<rect x="26.4" y="210.0" width="655.6" height="18.4" fill="#2b3441"/>
+<text x="51.6" y="223.0" fill="#e8ecf2" textLength="75.6" lengthAdjust="spacingAndGlyphs">`Customer</text>
+<text x="135.6" y="223.0" fill="#e8ecf2" textLength="25.2" lengthAdjust="spacingAndGlyphs">ID`</text>
+<text x="169.2" y="223.0" fill="#e8ecf2" textLength="33.6" lengthAdjust="spacingAndGlyphs">INT,</text>
+<rect x="26.4" y="228.0" width="655.6" height="18.4" fill="#2b3441"/>
+<text x="51.6" y="241.0" fill="#e8ecf2" textLength="50.4" lengthAdjust="spacingAndGlyphs">`Order</text>
+<text x="110.4" y="241.0" fill="#e8ecf2" textLength="42.0" lengthAdjust="spacingAndGlyphs">Date`</text>
+<text x="160.8" y="241.0" fill="#e8ecf2" textLength="75.6" lengthAdjust="spacingAndGlyphs">DATETIME,</text>
+<rect x="26.4" y="246.0" width="655.6" height="18.4" fill="#2b3441"/>
+<text x="51.6" y="259.0" fill="#e8ecf2" textLength="67.2" lengthAdjust="spacingAndGlyphs">`Shipped</text>
+<text x="127.2" y="259.0" fill="#e8ecf2" textLength="42.0" lengthAdjust="spacingAndGlyphs">Date`</text>
+<text x="177.6" y="259.0" fill="#e8ecf2" textLength="75.6" lengthAdjust="spacingAndGlyphs">DATETIME,</text>
+<rect x="26.4" y="264.0" width="655.6" height="18.4" fill="#2b3441"/>
+<text x="51.6" y="277.0" fill="#e8ecf2" textLength="67.2" lengthAdjust="spacingAndGlyphs">`Shipper</text>
+<text x="127.2" y="277.0" fill="#e8ecf2" textLength="25.2" lengthAdjust="spacingAndGlyphs">ID`</text>
+<text x="160.8" y="277.0" fill="#e8ecf2" textLength="33.6" lengthAdjust="spacingAndGlyphs">INT,</text>
+<rect x="26.4" y="282.0" width="655.6" height="18.4" fill="#2b3441"/>
+<text x="51.6" y="295.0" fill="#e8ecf2" textLength="42.0" lengthAdjust="spacingAndGlyphs">`Ship</text>
+<text x="102.0" y="295.0" fill="#e8ecf2" textLength="42.0" lengthAdjust="spacingAndGlyphs">Name`</text>
+<text x="152.4" y="295.0" fill="#e8ecf2" textLength="109.2" lengthAdjust="spacingAndGlyphs">VARCHAR(100),</text>
+<rect x="26.4" y="300.0" width="655.6" height="18.4" fill="#2b3441"/>
+<text x="51.6" y="313.0" fill="#e8ecf2" textLength="42.0" lengthAdjust="spacingAndGlyphs">`Ship</text>
+<text x="102.0" y="313.0" fill="#e8ecf2" textLength="67.2" lengthAdjust="spacingAndGlyphs">Address`</text>
+<text x="177.6" y="313.0" fill="#e8ecf2" textLength="75.6" lengthAdjust="spacingAndGlyphs">LONGTEXT,</text>
+<rect x="26.4" y="336.0" width="134.8" height="18.4" fill="#2a5993"/>
+<rect x="177.6" y="336.0" width="67.6" height="18.4" fill="#2b3441"/>
+<text x="39.0" y="349.0" fill="#ffffff" font-weight="bold" text-anchor="middle">▸</text>
+<text x="51.6" y="349.0" fill="#ffffff" font-weight="bold" textLength="58.8" lengthAdjust="spacingAndGlyphs">Guardar</text>
+<text x="118.8" y="349.0" fill="#ffffff" font-weight="bold" textLength="33.6" lengthAdjust="spacingAndGlyphs">.sql</text>
+<text x="186.0" y="349.0" fill="#e8ecf2" textLength="50.4" lengthAdjust="spacingAndGlyphs">Volver</text>
+<text x="127.2" y="475.0" fill="#c8a249" font-weight="bold" textLength="25.2" lengthAdjust="spacingAndGlyphs">↑/↓</text>
+<text x="160.8" y="475.0" fill="#8a93a3" textLength="75.6" lengthAdjust="spacingAndGlyphs">desplazar</text>
+<text x="249.0" y="475.0" fill="#8a93a3" text-anchor="middle">·</text>
+<text x="261.6" y="475.0" fill="#c8a249" font-weight="bold" textLength="25.2" lengthAdjust="spacingAndGlyphs">←/→</text>
+<text x="295.2" y="475.0" fill="#8a93a3" textLength="42.0" lengthAdjust="spacingAndGlyphs">botón</text>
+<text x="349.8" y="475.0" fill="#8a93a3" text-anchor="middle">·</text>
+<text x="362.4" y="475.0" fill="#c8a249" font-weight="bold" textLength="42.0" lengthAdjust="spacingAndGlyphs">Enter</text>
+<text x="412.8" y="475.0" fill="#8a93a3" textLength="50.4" lengthAdjust="spacingAndGlyphs">elegir</text>
+<text x="475.8" y="475.0" fill="#8a93a3" text-anchor="middle">·</text>
+<text x="488.4" y="475.0" fill="#c8a249" font-weight="bold" textLength="25.2" lengthAdjust="spacingAndGlyphs">Esc</text>
+<text x="522.0" y="475.0" fill="#8a93a3" textLength="50.4" lengthAdjust="spacingAndGlyphs">volver</text>
+</g></svg>

@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="708" height="492" viewBox="0 0 708 492" role="img" aria-label="accesql">
+<rect width="708" height="492" rx="10" fill="#1e1e2e"/>
+<path d="M0 10a10 10 0 0 1 10-10h688a10 10 0 0 1 10 10v24H0z" fill="#181825"/>
+<circle cx="20" cy="17" r="6" fill="#f38ba8"/><circle cx="40" cy="17" r="6" fill="#f9e2af"/><circle cx="60" cy="17" r="6" fill="#a6e3a1"/>
+<text x="354" y="22" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#a6adc8">accesql</text>
+<g font-family="DejaVu Sans Mono, Menlo, Consolas, Liberation Mono, monospace" font-size="14" xml:space="preserve">
+<rect x="26.4" y="48.0" width="655.6" height="18.4" fill="#1b4476"/>
+<text x="34.8" y="61.0" fill="#ffffff" font-weight="bold" textLength="58.8" lengthAdjust="spacingAndGlyphs">Accesql</text>
+<text x="106.2" y="61.0" fill="#ffffff" font-weight="bold" text-anchor="middle">›</text>
+<text x="118.8" y="61.0" fill="#ffffff" font-weight="bold" textLength="75.6" lengthAdjust="spacingAndGlyphs">Consultas</text>
+<text x="202.8" y="61.0" fill="#ffffff" font-weight="bold" textLength="25.2" lengthAdjust="spacingAndGlyphs">SQL</text>
+<text x="26.4" y="79.0" fill="#c8a249" textLength="655.2" lengthAdjust="spacingAndGlyphs">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</text>
+<text x="26.4" y="97.0" fill="#c8a249" textLength="655.2" lengthAdjust="spacingAndGlyphs">╭────────────────────────────────────────────────────────────────────────────╮</text>
+<text x="30.6" y="115.0" fill="#c8a249" text-anchor="middle">│</text>
+<text x="43.2" y="115.0" fill="#cdd6f4" textLength="50.4" lengthAdjust="spacingAndGlyphs">SELECT</text>
+<text x="102.0" y="115.0" fill="#cdd6f4" textLength="84.0" lengthAdjust="spacingAndGlyphs">c.Company,</text>
+<text x="194.4" y="115.0" fill="#cdd6f4" textLength="117.6" lengthAdjust="spacingAndGlyphs">COUNT(o.`Order</text>
+<text x="320.4" y="115.0" fill="#cdd6f4" textLength="33.6" lengthAdjust="spacingAndGlyphs">ID`)</text>
+<text x="362.4" y="115.0" fill="#cdd6f4" textLength="16.8" lengthAdjust="spacingAndGlyphs">AS</text>
+<text x="387.6" y="115.0" fill="#cdd6f4" textLength="58.8" lengthAdjust="spacingAndGlyphs">pedidos</text>
+<text x="454.8" y="115.0" fill="#cdd6f4" textLength="33.6" lengthAdjust="spacingAndGlyphs">FROM</text>
+<text x="496.8" y="115.0" fill="#cdd6f4" textLength="75.6" lengthAdjust="spacingAndGlyphs">Customers</text>
+<text x="585.0" y="115.0" fill="#cdd6f4" text-anchor="middle">c</text>
+<text x="597.6" y="115.0" fill="#cdd6f4" textLength="33.6" lengthAdjust="spacingAndGlyphs">LEFT</text>
+<text x="677.4" y="115.0" fill="#c8a249" text-anchor="middle">│</text>
+<text x="30.6" y="133.0" fill="#c8a249" text-anchor="middle">│</text>
+<text x="43.2" y="133.0" fill="#cdd6f4" textLength="33.6" lengthAdjust="spacingAndGlyphs">JOIN</text>
+<text x="85.2" y="133.0" fill="#cdd6f4" textLength="50.4" lengthAdjust="spacingAndGlyphs">Orders</text>
+<text x="148.2" y="133.0" fill="#cdd6f4" text-anchor="middle">o</text>
+<text x="160.8" y="133.0" fill="#cdd6f4" textLength="16.8" lengthAdjust="spacingAndGlyphs">ON</text>
+<text x="186.0" y="133.0" fill="#cdd6f4" textLength="92.4" lengthAdjust="spacingAndGlyphs">o.`Customer</text>
+<text x="286.8" y="133.0" fill="#cdd6f4" textLength="25.2" lengthAdjust="spacingAndGlyphs">ID`</text>
+<text x="324.6" y="133.0" fill="#cdd6f4" text-anchor="middle">=</text>
+<text x="337.2" y="133.0" fill="#cdd6f4" textLength="33.6" lengthAdjust="spacingAndGlyphs">c.ID</text>
+<text x="379.2" y="133.0" fill="#cdd6f4" textLength="42.0" lengthAdjust="spacingAndGlyphs">GROUP</text>
+<text x="429.6" y="133.0" fill="#cdd6f4" textLength="16.8" lengthAdjust="spacingAndGlyphs">BY</text>
+<text x="454.8" y="133.0" fill="#cdd6f4" textLength="75.6" lengthAdjust="spacingAndGlyphs">c.Company</text>
+<text x="538.8" y="133.0" fill="#cdd6f4" textLength="42.0" lengthAdjust="spacingAndGlyphs">ORDER</text>
+<text x="589.2" y="133.0" fill="#cdd6f4" textLength="16.8" lengthAdjust="spacingAndGlyphs">BY</text>
+<text x="677.4" y="133.0" fill="#c8a249" text-anchor="middle">│</text>
+<rect x="144.0" y="138.0" width="8.8" height="18.4" fill="#cdd6f4"/>
+<text x="30.6" y="151.0" fill="#c8a249" text-anchor="middle">│</text>
+<text x="43.2" y="151.0" fill="#cdd6f4" textLength="58.8" lengthAdjust="spacingAndGlyphs">pedidos</text>
+<text x="110.4" y="151.0" fill="#cdd6f4" textLength="33.6" lengthAdjust="spacingAndGlyphs">DESC</text>
+<text x="677.4" y="151.0" fill="#c8a249" text-anchor="middle">│</text>
+<text x="30.6" y="169.0" fill="#c8a249" text-anchor="middle">│</text>
+<text x="677.4" y="169.0" fill="#c8a249" text-anchor="middle">│</text>
+<text x="26.4" y="187.0" fill="#c8a249" textLength="655.2" lengthAdjust="spacingAndGlyphs">╰────────────────────────────────────────────────────────────────────────────╯</text>
+<rect x="26.4" y="192.0" width="84.4" height="18.4" fill="#2b3441"/>
+<rect x="127.2" y="192.0" width="67.6" height="18.4" fill="#2b3441"/>
+<rect x="211.2" y="192.0" width="76.0" height="18.4" fill="#2b3441"/>
+<rect x="303.6" y="192.0" width="50.8" height="18.4" fill="#2b3441"/>
+<rect x="370.8" y="192.0" width="42.4" height="18.4" fill="#2b3441"/>
+<rect x="429.6" y="192.0" width="42.4" height="18.4" fill="#2b3441"/>
+<rect x="488.4" y="192.0" width="67.6" height="18.4" fill="#2b3441"/>
+<text x="34.8" y="205.0" fill="#e8ecf2" textLength="67.2" lengthAdjust="spacingAndGlyphs">Ejecutar</text>
+<text x="135.6" y="205.0" fill="#e8ecf2" textLength="50.4" lengthAdjust="spacingAndGlyphs">Tablas</text>
+<text x="219.6" y="205.0" fill="#e8ecf2" textLength="58.8" lengthAdjust="spacingAndGlyphs">Limpiar</text>
+<text x="312.0" y="205.0" fill="#e8ecf2" textLength="33.6" lengthAdjust="spacingAndGlyphs">JSON</text>
+<text x="379.2" y="205.0" fill="#e8ecf2" textLength="25.2" lengthAdjust="spacingAndGlyphs">CSV</text>
+<text x="438.0" y="205.0" fill="#e8ecf2" textLength="25.2" lengthAdjust="spacingAndGlyphs">SQL</text>
+<text x="496.8" y="205.0" fill="#e8ecf2" textLength="50.4" lengthAdjust="spacingAndGlyphs">Volver</text>
+<text x="30.6" y="223.0" fill="#3fa564" font-weight="bold" text-anchor="middle">✔</text>
+<text x="43.2" y="223.0" fill="#8a93a3" textLength="16.8" lengthAdjust="spacingAndGlyphs">29</text>
+<text x="68.4" y="223.0" fill="#8a93a3" textLength="42.0" lengthAdjust="spacingAndGlyphs">filas</text>
+<text x="123.0" y="223.0" fill="#8a93a3" text-anchor="middle">·</text>
+<text x="139.8" y="223.0" fill="#8a93a3" text-anchor="middle">0</text>
+<text x="152.4" y="223.0" fill="#8a93a3" textLength="16.8" lengthAdjust="spacingAndGlyphs">ms</text>
+<text x="26.4" y="241.0" fill="#c8a249" font-weight="bold" textLength="58.8" lengthAdjust="spacingAndGlyphs">Company</text>
+<text x="123.0" y="241.0" fill="#c8a249" font-weight="bold" text-anchor="middle">│</text>
+<text x="135.6" y="241.0" fill="#c8a249" font-weight="bold" textLength="58.8" lengthAdjust="spacingAndGlyphs">pedidos</text>
+<text x="207.0" y="241.0" fill="#c8a249" font-weight="bold" text-anchor="middle">│</text>
+<rect x="26.4" y="246.0" width="655.6" height="18.4" fill="#2b3441"/>
+<text x="26.4" y="259.0" fill="#e8ecf2" textLength="58.8" lengthAdjust="spacingAndGlyphs">Company</text>
+<text x="97.8" y="259.0" fill="#e8ecf2" text-anchor="middle">F</text>
+<text x="123.0" y="259.0" fill="#e8ecf2" text-anchor="middle">│</text>
+<text x="139.8" y="259.0" fill="#e8ecf2" text-anchor="middle">6</text>
+<text x="207.0" y="259.0" fill="#e8ecf2" text-anchor="middle">│</text>
+<text x="26.4" y="277.0" fill="#cdd6f4" textLength="58.8" lengthAdjust="spacingAndGlyphs">Company</text>
+<text x="97.8" y="277.0" fill="#cdd6f4" text-anchor="middle">H</text>
+<text x="123.0" y="277.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="139.8" y="277.0" fill="#cdd6f4" text-anchor="middle">6</text>
+<text x="207.0" y="277.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="26.4" y="295.0" fill="#cdd6f4" textLength="58.8" lengthAdjust="spacingAndGlyphs">Company</text>
+<text x="97.8" y="295.0" fill="#cdd6f4" text-anchor="middle">D</text>
+<text x="123.0" y="295.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="139.8" y="295.0" fill="#cdd6f4" text-anchor="middle">5</text>
+<text x="207.0" y="295.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="26.4" y="313.0" fill="#cdd6f4" textLength="58.8" lengthAdjust="spacingAndGlyphs">Company</text>
+<text x="97.8" y="313.0" fill="#cdd6f4" text-anchor="middle">J</text>
+<text x="123.0" y="313.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="139.8" y="313.0" fill="#cdd6f4" text-anchor="middle">4</text>
+<text x="207.0" y="313.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="26.4" y="331.0" fill="#cdd6f4" textLength="58.8" lengthAdjust="spacingAndGlyphs">Company</text>
+<text x="93.6" y="331.0" fill="#cdd6f4" textLength="16.8" lengthAdjust="spacingAndGlyphs">BB</text>
+<text x="123.0" y="331.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="139.8" y="331.0" fill="#cdd6f4" text-anchor="middle">4</text>
+<text x="207.0" y="331.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="26.4" y="349.0" fill="#cdd6f4" textLength="58.8" lengthAdjust="spacingAndGlyphs">Company</text>
+<text x="93.6" y="349.0" fill="#cdd6f4" textLength="16.8" lengthAdjust="spacingAndGlyphs">CC</text>
+<text x="123.0" y="349.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="139.8" y="349.0" fill="#cdd6f4" text-anchor="middle">4</text>
+<text x="207.0" y="349.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="26.4" y="367.0" fill="#cdd6f4" textLength="58.8" lengthAdjust="spacingAndGlyphs">Company</text>
+<text x="97.8" y="367.0" fill="#cdd6f4" text-anchor="middle">C</text>
+<text x="123.0" y="367.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="139.8" y="367.0" fill="#cdd6f4" text-anchor="middle">3</text>
+<text x="207.0" y="367.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="26.4" y="385.0" fill="#cdd6f4" textLength="58.8" lengthAdjust="spacingAndGlyphs">Company</text>
+<text x="97.8" y="385.0" fill="#cdd6f4" text-anchor="middle">A</text>
+<text x="123.0" y="385.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="139.8" y="385.0" fill="#cdd6f4" text-anchor="middle">2</text>
+<text x="207.0" y="385.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="26.4" y="403.0" fill="#cdd6f4" textLength="58.8" lengthAdjust="spacingAndGlyphs">Company</text>
+<text x="97.8" y="403.0" fill="#cdd6f4" text-anchor="middle">G</text>
+<text x="123.0" y="403.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="139.8" y="403.0" fill="#cdd6f4" text-anchor="middle">2</text>
+<text x="207.0" y="403.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="26.4" y="421.0" fill="#cdd6f4" textLength="58.8" lengthAdjust="spacingAndGlyphs">Company</text>
+<text x="97.8" y="421.0" fill="#cdd6f4" text-anchor="middle">I</text>
+<text x="123.0" y="421.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="139.8" y="421.0" fill="#cdd6f4" text-anchor="middle">2</text>
+<text x="207.0" y="421.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="26.4" y="439.0" fill="#cdd6f4" textLength="58.8" lengthAdjust="spacingAndGlyphs">Company</text>
+<text x="97.8" y="439.0" fill="#cdd6f4" text-anchor="middle">K</text>
+<text x="123.0" y="439.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="139.8" y="439.0" fill="#cdd6f4" text-anchor="middle">2</text>
+<text x="207.0" y="439.0" fill="#cdd6f4" text-anchor="middle">│</text>
+<text x="169.2" y="475.0" fill="#c8a249" font-weight="bold" textLength="50.4" lengthAdjust="spacingAndGlyphs">Ctrl+R</text>
+<text x="228.0" y="475.0" fill="#8a93a3" textLength="67.2" lengthAdjust="spacingAndGlyphs">ejecutar</text>
+<text x="307.8" y="475.0" fill="#8a93a3" text-anchor="middle">·</text>
+<text x="320.4" y="475.0" fill="#c8a249" font-weight="bold" textLength="25.2" lengthAdjust="spacingAndGlyphs">Tab</text>
+<text x="354.0" y="475.0" fill="#8a93a3" textLength="58.8" lengthAdjust="spacingAndGlyphs">botones</text>
+<text x="425.4" y="475.0" fill="#8a93a3" text-anchor="middle">·</text>
+<text x="438.0" y="475.0" fill="#c8a249" font-weight="bold" textLength="25.2" lengthAdjust="spacingAndGlyphs">Esc</text>
+<text x="471.6" y="475.0" fill="#8a93a3" textLength="58.8" lengthAdjust="spacingAndGlyphs">botones</text>
+</g></svg>
