@@ -63,6 +63,7 @@ func (e *Engine) Reload(path string) error {
 			return err
 		}
 		keep[name] = true
+		e.meta[name] = t.Columns
 		if err := e.replaceTable(t); err != nil {
 			return fmt.Errorf("recargando tabla %q: %w", name, err)
 		}
@@ -80,8 +81,13 @@ func (e *Engine) Reload(path string) error {
 			if err := e.db.DropTable(e.ctx, name); err != nil {
 				return err
 			}
+			delete(e.meta, name)
 		}
 	}
+	if rels, err := src.Relations(); err == nil {
+		e.relations = rels
+	}
+	e.loadedAt = time.Now()
 	debug.FreeOSMemory()
 	return nil
 }

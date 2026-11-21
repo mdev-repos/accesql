@@ -26,6 +26,7 @@ type DB struct {
 type Column struct {
 	Name string
 	Type string
+	Size int // largo declarado en Access (Text(100) → 100); 0 si no aplica o no se conoce
 }
 
 // Table es una tabla leída tal cual: esquema y valores crudos, sin adaptar a
@@ -87,6 +88,9 @@ func (d *DB) Load(table string) (*Table, error) {
 	t := &Table{Name: table, Columns: make([]Column, len(colTypes)), Rows: [][]any{}}
 	for i, ct := range colTypes {
 		t.Columns[i] = Column{Name: ct.Name(), Type: ct.DatabaseTypeName()}
+		if n, ok := ct.Length(); ok && n > 0 && n < 1<<20 {
+			t.Columns[i].Size = int(n)
+		}
 	}
 
 	for rows.Next() {
