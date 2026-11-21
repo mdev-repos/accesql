@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"accesql/internal/access"
@@ -452,10 +453,31 @@ func (s *Session) StopServer() {
 	}
 }
 
+// Códigos de Winsock: en Windows los errores de red no coinciden con los de
+// syscall.EADDRINUSE / EACCES, así que se comparan por número.
+const (
+	wsaEAddrInUse = 10048
+	wsaEAcces     = 10013
+)
+
+// unwrapListenErr traduce los errores típicos al abrir un puerto a un mensaje
+// que el usuario entienda, igual en Linux y en Windows.
 func unwrapListenErr(err error) error {
-	msg := err.Error()
-	if strings.Contains(msg, "address already in use") || strings.Contains(msg, "Only one usage of each socket") {
+	var errno syscall.Errno
+	code := uintptr(0)
+	if errors.As(err, &errno) {
+		code = uintptr(errno)
+	}
+	msg := strings.ToLower(err.Error())
+	switch {
+	case errors.Is(err, syscall.EADDRINUSE) || code == wsaEAddrInUse ||
+		strings.Contains(msg, "address already in use") || strings.Contains(msg, "only one usage of each socket") ||
+		strings.Contains(msg, "#10048"):
 		return errors.New("el puerto ya está en uso por otro programa")
+	case errors.Is(err, syscall.EACCES) || code == wsaEAcces ||
+		strings.Contains(msg, "permission denied") || strings.Contains(msg, "forbidden by its access permissions") ||
+		strings.Contains(msg, "#10013"):
+		return errors.New("no hay permiso para usar ese puerto (en Linux los menores a 1024 requieren privilegios; en Windows algunos están reservados): probá con otro")
 	}
 	return err
 }

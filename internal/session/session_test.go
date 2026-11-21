@@ -10,9 +10,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 
@@ -623,7 +625,8 @@ func TestListDir(t *testing.T) {
 	for _, f := range []string{"b.ACCDB", "A.mdb", "notas.txt", "x.accdb.bak", ".secreta.mdb"} {
 		os.WriteFile(filepath.Join(root, f), []byte("x"), 0o644)
 	}
-	os.Symlink(filepath.Join(root, "alfa"), filepath.Join(root, "enlace"))
+	// En Windows crear enlaces simbólicos exige privilegios: si no se puede, se prueba sin él.
+	hasLink := os.Symlink(filepath.Join(root, "alfa"), filepath.Join(root, "enlace")) == nil
 
 	l, err := ListDir(root)
 	if err != nil {
@@ -634,6 +637,9 @@ func TestListDir(t *testing.T) {
 		names = append(names, e.Name)
 	}
 	want := "alfa,enlace,Zeta,A.mdb,b.ACCDB"
+	if !hasLink {
+		want = "alfa,Zeta,A.mdb,b.ACCDB"
+	}
 	if strings.Join(names, ",") != want {
 		t.Errorf("entradas = %v, quiero %s (carpetas primero, solo bases de Access, sin ocultos)", names, want)
 	}
@@ -657,8 +663,16 @@ func TestListDir(t *testing.T) {
 	if _, err := ListDir(filepath.Join(root, "no-existe")); err == nil {
 		t.Error("una carpeta inexistente debe fallar")
 	}
-	if l, err := ListDir(""); err != nil || l.Path == "" {
-		t.Errorf("ListDir(\"\") debe abrir la carpeta por defecto: %v", err)
+	l3, err := ListDir("")
+	switch {
+	case err != nil:
+		t.Errorf("ListDir(\"\"): %v", err)
+	case runtime.GOOS == "windows": // en Windows, "" es la lista de unidades
+		if l3.Path != "" || l3.HasParent || len(l3.Entries) == 0 {
+			t.Errorf("la lista de unidades: %+v", l3)
+		}
+	case l3.Path == "":
+		t.Error(`ListDir("") debe abrir la carpeta por defecto`)
 	}
 }
 
@@ -781,4 +795,34 @@ func TestGenerateStateExposesProgressAndErrors(t *testing.T) {
 		t.Errorf("abrir un archivo debe limpiar el error: %q", got)
 	}
 	s.CancelGenerate() // sin generación en curso: no hace nada ni se cuelga
+}
+
+func TestListenErrorMessages(t *testing.T) {
+	inUse := []error{
+		fmt.Errorf("listen tcp 127.0.0.1:3306: bind: %w", syscall.EADDRINUSE),
+		errors.New("listen tcp 127.0.0.1:3306: bind: address already in use"),
+		errors.New("listen tcp 127.0.0.1:3306: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted."),
+		errors.New("listen tcp 127.0.0.1:3306: bind: winapi error #10048"),
+		fmt.Errorf("listen: %w", syscall.Errno(10048)),
+	}
+	for _, e := range inUse {
+		if got := unwrapListenErr(e); !strings.Contains(got.Error(), "puerto ya está en uso") {
+			t.Errorf("%v → %q", e, got)
+		}
+	}
+	denied := []error{
+		fmt.Errorf("listen tcp 127.0.0.1:80: bind: %w", syscall.EACCES),
+		errors.New("listen tcp 127.0.0.1:80: bind: permission denied"),
+		errors.New("listen tcp 127.0.0.1:80: bind: An attempt was made to access a socket in a way forbidden by its access permissions."),
+		errors.New("listen tcp 127.0.0.1:80: bind: winapi error #10013"),
+	}
+	for _, e := range denied {
+		if got := unwrapListenErr(e); !strings.Contains(got.Error(), "no hay permiso") {
+			t.Errorf("%v → %q", e, got)
+		}
+	}
+	other := errors.New("algo distinto")
+	if got := unwrapListenErr(other); got != other {
+		t.Errorf("un error desconocido debe pasar sin cambios: %v", got)
+	}
 }

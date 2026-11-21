@@ -295,7 +295,13 @@ func TestOpenFileFromExplorer(t *testing.T) {
 	needDB(t)
 	a, sess := newApp(t)
 	// Una carpeta con dos bases, un .txt, una subcarpeta y un archivo oculto.
-	dir := t.TempDir()
+	// (En Windows, la librería de lectura deja abierto un archivo corrupto tras
+	// un intento fallido y no se puede borrar: la limpieza no debe fallar el test.)
+	dir, err := os.MkdirTemp("", "accesql-explorador-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
 	os.Mkdir(filepath.Join(dir, "sub"), 0o755)
 	os.WriteFile(filepath.Join(dir, "notas.txt"), []byte("x"), 0o644)
 	b, _ := os.ReadFile(northwind)
