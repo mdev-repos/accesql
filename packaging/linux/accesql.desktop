@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Accesql
+GenericName=Conversor de Access a MySQL
+Comment=Convierte bases de Microsoft Access a MySQL
+Comment[en]=Convert Microsoft Access databases to MySQL
+Exec=accesql
+Icon=accesql
+Terminal=true
+Categories=Office;Database;
+Keywords=access;mysql;accdb;mdb;convertir;base de datos;

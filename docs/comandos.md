@@ -11,7 +11,8 @@ accesql serve -f archivo [--host ...] [-p 3306] [-u usuario] [-d base] [--reload
 accesql web   [-f archivo] [--host ...] [-p 8080] [--open]
 ```
 
-Los mensajes informativos van a `stderr`; los datos, a `stdout`. Todo es de **solo lectura**:
+`accesql --help` (o `-h`) muestra la ayuda, `accesql ayuda <comando>` la de un comando y `accesql --version`
+(`-v`) la versión. Los mensajes informativos van a `stderr`; los datos, a `stdout`. Todo es de **solo lectura**:
 el archivo de Access nunca se modifica.
 
 ---

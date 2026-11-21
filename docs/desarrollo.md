@@ -6,18 +6,58 @@ Requiere **Go ≥ 1.26** (lo exige la librería `mdbgo`; con Go 1.21+ la toolcha
 No hace falta compilador de C: todo es Go puro (`CGO_ENABLED=0`).
 
 ```bash
-# Linux
-CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/accesql ./cmd/accesql
+go build -o bin/accesql ./cmd/accesql                       # para tu sistema
 
 # Windows, desde Linux
 GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/accesql.exe ./cmd/accesql
 ```
 
-La versión que muestran las interfaces y los scripts se puede fijar al compilar:
+La versión que muestran las interfaces, `--version` y los scripts sale de `internal/version/version.go` y se
+puede fijar al compilar:
 
 ```bash
 go build -ldflags "-X accesql/internal/version.Version=0.2.0" ./cmd/accesql
 ```
+
+## Empaquetar y publicar
+
+```bash
+scripts/build.sh                  # usa la versión de internal/version
+VERSION=0.2.0 scripts/build.sh    # o una versión explícita
+```
+
+Deja en `dist/` (ignorado por git):
+
+| Archivo | Contenido |
+|---|---|
+| `accesql-X.Y.Z-linux-amd64.tar.gz` | programa, `install.sh`, `accesql.desktop`, ícono, `LEEME.txt`, licencias |
+| `accesql-X.Y.Z-windows-amd64.zip` | `accesql.exe` (con ícono y datos de versión), `LEEME.txt` (con CRLF), licencias |
+| `SHA256SUMS` | huellas de los dos paquetes |
+
+El script refresca `THIRD_PARTY_NOTICES.md` (y avisa si aparece una dependencia con copyleft), regenera los
+recursos de Windows con la versión que se compila y arma los paquetes con tiempos fijos, para que el mismo
+código dé el mismo archivo.
+
+**Ícono y recursos de Windows.** El logo es `internal/web/static/logo.svg`; de ahí salen los íconos
+(`scripts/make-icons.py`: requiere Chrome y Pillow, y su resultado en `packaging/icons/` se versiona). Los
+recursos del `.exe` (ícono, versión, manifiesto) se definen en `packaging/windows/winres.json` y
+`scripts/winres.sh` los convierte en `cmd/accesql/rsrc_windows_amd64.syso`, que también se versiona: Go lo
+enlaza solo al compilar para Windows, así que compilar no requiere ninguna herramienta extra.
+
+**Publicar una versión en GitHub.** Subí el cambio de versión y creá la etiqueta:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+El flujo `.github/workflows/release.yml` compila los paquetes y los adjunta a la versión. El flujo
+`ci.yml` corre en cada cambio: formato, `go vet`, compilación y tests en Linux y en Windows, el detector de
+carreras y la construcción de los paquetes. Las pruebas que usan la base *Northwind* se saltan en la
+automatización (no se distribuye con el repositorio), así que ahí cubren menos que en tu máquina.
+
+**Probar el `.exe` sin Windows.** Con [Wine](https://www.winehq.org/) se pueden ejecutar tanto el programa como
+los tests compilados para Windows (`GOOS=windows go test -c ./internal/session` y luego `wine …test.exe`
+desde la carpeta del paquete). Sirve para detectar supuestos de Linux, pero no reemplaza a un Windows real.
 
 ## Estructura del proyecto
 
@@ -34,7 +74,10 @@ internal/version/    versión de la aplicación
 internal/tui/app/    menú interactivo de la terminal (bubbletea), sobre la sesión
 internal/web/        servidor HTTP + interfaz gráfica embebida (static/)
 internal/jsonout/    JSON con orden de columnas conservado
-scripts/             verificación (mdbtools, PHP) y generación de capturas
+scripts/             compilar y empaquetar, íconos, avisos de terceros, verificación (mdbtools, PHP), capturas
+packaging/           íconos, recursos de Windows, instalador y lanzador de Linux, LEEME de cada paquete
+.github/workflows/   automatización: pruebas y publicación de versiones
+LICENSES/            textos de las licencias (PolyForm)
 docs/                documentación
 testdb/              bases de prueba locales (Northwind); NO se versiona
 ```

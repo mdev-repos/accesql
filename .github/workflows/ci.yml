@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Pruebas (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      CGO_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Formato (gofmt)
+        if: runner.os == 'Linux'
+        run: test -z "$(gofmt -l .)"
+      - run: go vet ./...
+      - run: go build ./...
+      # Las pruebas que usan la base de ejemplo Northwind (de Microsoft, no se
+      # distribuye con el repositorio) se saltan solas si falta testdb/.
+      - run: go test ./...
+
+  race:
+    name: Detector de carreras
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: CGO_ENABLED=1 go test -race ./internal/...
+
+  paquetes:
+    name: Paquetes de Linux y Windows
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: scripts/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paquetes
+          path: dist/
+          retention-days: 14

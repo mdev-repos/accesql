@@ -1,0 +1,29 @@
+name: Publicar versión
+
+# Para publicar una versión:   git tag v0.2.0 && git push origin v0.2.0
+# Compila los paquetes de Linux y Windows y los adjunta a la versión en GitHub.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Compilar
+        run: VERSION="${GITHUB_REF_NAME#v}" scripts/build.sh
+      - name: Publicar
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/SHA256SUMS
+          generate_release_notes: true

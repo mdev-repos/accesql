@@ -1,0 +1,44 @@
+ACCESQL @VERSION@
+Convierte bases de Microsoft Access a MySQL
+===========================================
+
+CÓMO EMPEZAR
+  1. Hacé doble clic en accesql.exe. Se abre una ventana con un menú.
+     (También podés abrir PowerShell en esta carpeta y escribir:  .\accesql.exe )
+  2. Elegí «Abrir base de datos», buscá tu archivo .accdb o .mdb y seguí el menú
+     con las flechas y Enter. Esc vuelve atrás.
+  3. Para usar la interfaz en el navegador, elegí «Abrir interfaz gráfica».
+
+  Se ve mejor en «Terminal de Windows» que en la consola clásica. Necesita una
+  ventana de al menos 80 columnas por 24 filas.
+
+AVISO DE WINDOWS («Windows protegió su PC»)
+  Accesql todavía no está firmado digitalmente (la firma es un trámite pago),
+  así que Windows SmartScreen puede mostrar un aviso la primera vez:
+  tocá «Más información» y después «Ejecutar de todas formas».
+  Para comprobar que el archivo es el original, compará su huella con la de
+  SHA256SUMS (en PowerShell:  Get-FileHash accesql-@VERSION@-windows-amd64.zip ).
+
+QUÉ HACE Y QUÉ NO
+  - Lee tu base de Access en modo SOLO LECTURA: nunca modifica tu archivo.
+  - No envía datos a ningún lado.
+  - Puede exponer la base como un servidor MySQL, generar scripts para MySQL y
+    mostrar un diagrama de relaciones.
+  - Hacé siempre una copia de seguridad de tus bases y revisá los scripts
+    generados antes de ejecutarlos en un servidor de producción.
+
+AYUDA
+  accesql.exe --help        todas las opciones de la línea de comandos
+  accesql.exe --version     versión instalada
+
+LICENCIA
+  Se ofrece «tal cual», sin garantías, bajo PolyForm Noncommercial 1.0.0 o
+  PolyForm Internal Use 1.0.0, a elección de cada persona: ver LICENSE y la
+  carpeta LICENSES. No se puede vender, ofrecer como servicio ni usar para
+  prestar servicios a terceros. Los avisos de componentes de terceros están en
+  THIRD_PARTY_NOTICES.md.
+
+  «Microsoft Access» y «MySQL» son marcas de sus respectivos dueños; Accesql es
+  un proyecto independiente.
+
+Proyecto: https://github.com/mdev-repos/accesql

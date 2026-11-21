@@ -1,0 +1,45 @@
+ACCESQL @VERSION@
+Convierte bases de Microsoft Access a MySQL
+===========================================
+
+USAR SIN INSTALAR
+  ./accesql                 abre el menú interactivo en la terminal
+  ./accesql --help          todas las opciones de la línea de comandos
+
+INSTALAR (opcional, sin sudo)
+  ./install.sh              deja Accesql en ~/.local/bin y agrega «Accesql» (con
+                            su ícono) al menú de aplicaciones
+  ./install.sh --prefix /usr/local     (como root) instala para todos los usuarios
+  ./install.sh --uninstall  desinstala
+
+  El lanzador del menú abre una terminal con el menú de Accesql. Necesita una
+  ventana de al menos 80 columnas por 24 filas.
+
+QUÉ HACE Y QUÉ NO
+  - Lee tu base de Access en modo SOLO LECTURA: nunca modifica tu archivo.
+  - No envía datos a ningún lado.
+  - Puede exponer la base como un servidor MySQL, generar scripts para MySQL y
+    mostrar un diagrama de relaciones. Es un ejecutable único: no necesita
+    Access, ODBC ni Java.
+  - Hacé siempre una copia de seguridad de tus bases y revisá los scripts
+    generados antes de ejecutarlos en un servidor de producción.
+
+EN UN SERVIDOR SIN ESCRITORIO
+  El menú funciona por SSH. Para servir la base a otras aplicaciones:
+    export ACCESQL_PASSWORD='una-clave-larga'
+    ./accesql serve --file /ruta/base.accdb --port 3306
+
+  Para comprobar que el archivo descargado es el original, compará su huella con
+  SHA256SUMS:  sha256sum -c SHA256SUMS
+
+LICENCIA
+  Se ofrece «tal cual», sin garantías, bajo PolyForm Noncommercial 1.0.0 o
+  PolyForm Internal Use 1.0.0, a elección de cada persona: ver LICENSE y la
+  carpeta LICENSES. No se puede vender, ofrecer como servicio ni usar para
+  prestar servicios a terceros. Los avisos de componentes de terceros están en
+  THIRD_PARTY_NOTICES.md.
+
+  «Microsoft Access» y «MySQL» son marcas de sus respectivos dueños; Accesql es
+  un proyecto independiente.
+
+Proyecto: https://github.com/mdev-repos/accesql

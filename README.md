@@ -106,31 +106,54 @@ Los cinco bloques son: **Base de datos** (explorador de carpetas, generar la ima
 
 ## Instalación
 
-Accesql es un único ejecutable. No necesita instalación.
+Accesql es un único ejecutable. No necesita instalación ni nada más en el equipo.
 
-**Binarios precompilados.** La idea es adjuntar los ejecutables para Linux y Windows a cada versión en
-la pestaña *Releases* del repositorio. *Todavía no hay versiones publicadas*: por ahora, compilá desde el
-código fuente.
+### Descargar
 
-**Compilar desde el código fuente.** Requiere [Go](https://go.dev/dl/) 1.26 o superior. No hace falta
-compilador de C.
+Cada versión publicada en la pestaña [*Releases*](https://github.com/mdev-repos/accesql/releases) trae:
+
+| Archivo | Para |
+|---|---|
+| `accesql-X.Y.Z-windows-amd64.zip` | Windows 10 u 11 de 64 bits |
+| `accesql-X.Y.Z-linux-amd64.tar.gz` | Linux de 64 bits (incluye instalador y ícono) |
+| `SHA256SUMS` | huellas para comprobar que la descarga es la original |
+
+> *Todavía no hay versiones publicadas*: por ahora, compilá desde el código fuente (más abajo).
+
+**Windows.** Descomprimí el `.zip` y hacé doble clic en `accesql.exe`: se abre una ventana con el menú.
+Como el programa todavía no está firmado digitalmente, Windows puede mostrar «Windows protegió su PC» la
+primera vez: tocá *Más información* y después *Ejecutar de todas formas*.
+
+**Linux.**
+
+```bash
+tar xzf accesql-X.Y.Z-linux-amd64.tar.gz && cd accesql-X.Y.Z-linux-amd64
+./accesql                  # usarlo sin instalar
+./install.sh               # o instalarlo para tu usuario, con ícono en el menú de aplicaciones
+./install.sh --uninstall   # para quitarlo
+```
+
+**Comprobar la descarga.** `sha256sum -c SHA256SUMS` en Linux, o `Get-FileHash <archivo>` en PowerShell.
+
+### Compilar desde el código fuente
+
+Requiere [Go](https://go.dev/dl/) 1.26 o superior. No hace falta compilador de C.
 
 ```bash
 git clone https://github.com/mdev-repos/accesql.git
 cd accesql
 
-# Linux
-CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/accesql ./cmd/accesql
-
-# Windows (también desde Linux)
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/accesql.exe ./cmd/accesql
+go build -o bin/accesql ./cmd/accesql    # solo para tu sistema
+scripts/build.sh                         # paquetes de Linux y Windows en dist/ (con ícono y licencias)
 ```
 
-> En Windows el ejecutable compila, pero todavía no se probó en una máquina Windows real.
+> En Windows el ejecutable se probó con el emulador *Wine* (menú, consultas y pruebas automáticas), pero
+> todavía no en un Windows real.
 
 ## Cómo se usa
 
-El ejecutable se llama `accesql`. Elegí la forma que te convenga.
+El ejecutable se llama `accesql` (`accesql.exe` en Windows). `accesql --help` muestra todas las opciones y
+`accesql --version`, la versión. Elegí la forma que te convenga.
 
 ### 1. Con el menú de la terminal
 
@@ -213,9 +236,9 @@ Más opciones y cómo se arman los scripts: [Convertir a MySQL](docs/convertir-a
 ejemplo *Northwind* (tests automáticos, PHP 8.3 real, el cliente `mysql` y scripts ejecutados en un
 MariaDB real). Lo que todavía falta, con total honestidad:
 
-- Probar en Windows y con **MySQL 8**, y medir memoria y tiempos con **bases grandes**.
+- Probar en un **Windows real** y con **MySQL 8**, y medir memoria y tiempos con **bases grandes**.
 - Las columnas **OLE** (imágenes y objetos incrustados) no se leen bien (defecto de una dependencia).
-- Ejecutables publicados para Linux y Windows.
+- Publicar la primera versión con los ejecutables para Linux y Windows.
 
 ## Contribuir
 
