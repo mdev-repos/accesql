@@ -5,7 +5,11 @@ Herramienta de línea de comandos para leer bases Microsoft Access
 Pensada para que sistemas legacy en Access puedan alimentar a otras
 aplicaciones (PHP, etc.) con JSON.
 
-> Estado: MVP. Comandos: `dump`, `query`, `serve` y `ui` (interfaz de terminal).
+> Estado: MVP. Comandos: `dump`, `query`, `serve`, `ui` (interfaz de terminal) y
+> `web` (interfaz gráfica en el navegador, ya conectada a todas las funciones).
+> Ejecutado **sin argumentos** abre un menú de terminal que por ahora es solo una
+> **maqueta** (aspecto y navegación, sin funcionalidad): se conectará a la misma
+> capa que usa la web.
 
 ## Compilar
 
@@ -73,6 +77,96 @@ Muestra hasta 1.000 filas por consulta (avisa si hay más) para que un
 `SELECT *` sobre una tabla enorme no cuelgue la pantalla. Trabaja sobre una
 foto de solo lectura, igual que `query`. Una consulta en curso no se puede
 cancelar. Necesita una terminal de al menos 60x16.
+
+### Interfaz gráfica en el navegador (`web`)
+
+```bash
+access-tool web --open                 # elegís el archivo desde la página
+access-tool web -f datos.accdb --open  # o lo dejás preseleccionado
+```
+
+Levanta una página local (**Accesql**: gris, azul y dorado; también funciona en
+el celular) para quien prefiera no usar la terminal. Va **dentro del
+ejecutable**: HTML, CSS y JavaScript sin librerías, sin CDN y sin internet.
+Al iniciar imprime un enlace del estilo `http://127.0.0.1:8080/#t=<token>`;
+`--open` lo abre solo. Es una sola pantalla con bloques que se habilitan en
+orden: solo el primero está activo hasta generar la imagen.
+
+1. **Base de datos:** explorador de carpetas propio (muestra solo `.accdb` y
+   `.mdb`), nombre de la base MySQL (por defecto, el del archivo) y **Generar
+   imagen MySQL** con barra de progreso y botón Cancelar. Se puede descargar toda
+   la base como un JSON.
+2. **Servidor MySQL** *(opcional)*: expone la imagen por el protocolo MySQL con
+   dirección, puerto, usuario y contraseña (obligatoria), y se inicia y detiene
+   desde la página. Muestra el comando `mysql` y el DSN de PHP para copiar.
+3. **Consultas SQL** *(opcional)*: editor (`Ctrl+Enter` ejecuta), lista de
+   tablas y resultado en tabla. Exporta lo consultado a **JSON, CSV** (separado
+   por `;` y con BOM, para que Excel en español lo abra bien) o **SQL** (`INSERT`).
+   Las exportaciones traen todas las filas (hasta 1.000.000), no solo las visibles.
+4. **Convertir a MySQL** *(opcional)*: genera un script `.sql`.
+   - *Crear una base nueva:* `CREATE DATABASE`, tablas con tipos de MySQL, datos
+     y, si se pide, claves primarias y `FOREIGN KEY`.
+   - *Agregar datos a tablas que ya existen:* solo `INSERT`, con otro nombre de
+     tabla si hace falta, qué hacer con los registros repetidos (omitir,
+     actualizar o reemplazar) y transacción opcional. Si la tabla de MySQL tiene
+     menos columnas, se pegan las que tiene y solo se copian las que coinciden.
+   - El script se ve en pantalla (vista previa de hasta 128 KB) y se descarga
+     completo.
+5. **Diagrama de relaciones** *(opcional)*: tablas, columnas y las **relaciones
+   reales definidas en Access** (las lee de la tabla interna `MSysRelationships`),
+   con las claves marcadas. Un clic en una tabla resalta las suyas.
+
+Cómo se arman los scripts:
+
+- **Claves primarias:** Access no las expone por esta vía. Se deducen de las
+  columnas que otra tabla referencia en una relación, o de una columna llamada
+  `ID` / `<tabla> ID`, y **solo se declaran si los datos las confirman** (sin
+  vacíos ni repetidos, comparando como MySQL: sin distinguir mayúsculas ni
+  acentos).
+- **Claves foráneas:** solo las relaciones para las que Access exigía integridad
+  referencial y cuyas columnas tienen el mismo tipo. El resto se avisa en el
+  encabezado del script (`-- AVISO:`). Se crean con las comprobaciones
+  desactivadas durante la carga, para que datos viejos con registros huérfanos
+  no hagan fallar el script.
+- **Tipos (Access → MySQL):** Booleano → `TINYINT(1)`, Byte → `TINYINT UNSIGNED`,
+  Entero → `SMALLINT`, Entero largo → `INT`, Complex → `BIGINT`, Simple → `FLOAT`,
+  Doble → `DOUBLE`, Moneda → `DECIMAL(19,4)`, Numérico → `DECIMAL(38,s)` (con los
+  decimales que muestran los datos), Fecha/hora → `DATETIME`, Binario y OLE →
+  `LONGBLOB`, Id. de réplica → `CHAR(38)`, Texto(n) → `VARCHAR(n)` (el largo
+  declarado en Access) y Memo/Hipervínculo → `LONGTEXT`. Si una tabla tiene tantas
+  columnas de texto que no entra en una fila de MySQL (65.535 bytes), las más
+  anchas pasan a `TEXT`. Una "Autonumeración" sale como `INT` común (Access no la
+  distingue por esta vía).
+- **Texto:** los valores se escapan (comillas, barras, saltos de línea) y las
+  fechas salen sin zona horaria.
+
+Seguridad (una página que ejecuta SQL, explora carpetas y abre un puerto es una
+superficie de ataque):
+
+- Escucha solo en `127.0.0.1`. La imagen es de solo lectura, con las funciones
+  de archivos del motor deshabilitadas (`LOAD_FILE`, `INTO OUTFILE`, `LOAD DATA`).
+- Todas las rutas `/api/` exigen un **token aleatorio** de 128 bits. Va en el
+  fragmento `#t=` del enlace, que el navegador no envía al servidor ni incluye
+  en el `Referer`, y la página lo saca de la barra de direcciones al cargar. Sin
+  el token, la API responde 401. Quien lo tiene puede explorar las carpetas del
+  equipo y abrir un puerto MySQL: tratarlo como una contraseña.
+- Se valida la cabecera `Host` (defensa contra *DNS rebinding*) y el `Origin`,
+  y una política CSP impide cargar scripts o estilos externos.
+- Los CSV neutralizan la *inyección de fórmulas*: un texto que empieza con
+  `=`, `+`, `-` o `@` se exporta con una comilla delante.
+- El servidor MySQL integrado exige contraseña, y al detenerlo se borra su
+  usuario (reiniciarlo con otra clave no deja valer la anterior).
+- `--host 0.0.0.0` expone la interfaz a la red **sin cifrado** (HTTP): usar solo
+  en redes de confianza o por un túnel SSH/VPN.
+
+Limitaciones: la pantalla muestra los números como números de JavaScript (pierden
+precisión a partir de ~15 dígitos significativos; las exportaciones son exactas);
+el nombre de la base MySQL se elige al generar la imagen y no se puede cambiar
+después; las consultas se ejecutan de a una por vez y no se pueden cancelar; el
+servidor MySQL integrado no tiene TLS; los scripts se probaron contra MariaDB 10.11
+(no contra MySQL 8) y con bases chicas: el tiempo de deducir claves en tablas de
+millones de filas está sin medir. La opción `--reload-every` pertenece a `serve`;
+en la página, para refrescar los datos se vuelve a **Generar imagen**.
 
 ### Servidor MySQL (`serve`)
 
@@ -207,7 +301,8 @@ opción pública.
 ## Tests
 
 ```bash
-go test ./...                                   # TUI: teclas, resultados, geometría en varios tamaños
+go test ./...                                   # sesión, scripts MySQL, exportaciones, web (token, host, origen, aislamiento) y TUI
+ACCESQL_MYSQL_ARGS="--socket=/tmp/x.sock -uroot" go test ./internal/session -run RealMySQL -v   # ejecuta los scripts en un MySQL/MariaDB real
 python3 -I scripts/compare_mdbtools.py bin/access-tool testdb/Northwind.accdb
 php scripts/php_smoke_test.php 127.0.0.1 3307 access secreta   # con `serve` corriendo
 ```
@@ -216,10 +311,15 @@ php scripts/php_smoke_test.php 127.0.0.1 3307 access secreta   # con `serve` cor
 
 ```
 cmd/access-tool/     punto de entrada (main), sin lógica
-internal/cli/        comandos cobra (root, dump, query, serve, ui)
+internal/cli/        comandos cobra (root, dump, query, serve, ui, web)
 internal/access/     lectura de Access (envuelve mdbgo)
 internal/engine/     motor SQL en memoria (go-mysql-server) cargado desde Access
-internal/tui/        interfaz de terminal (bubbletea)
+internal/session/    estado y operaciones compartidas por las interfaces (abrir, generar, consultar, servidor, esquema, exportar, scripts, explorador)
+internal/export/     resultado → JSON / CSV / INSERT
+internal/migrate/    base Access → script MySQL (base nueva / agregar a tablas existentes)
+internal/version/    versión de la aplicación
+internal/tui/        interfaz de terminal (bubbletea); app/ es el menú principal (maqueta)
+internal/web/        servidor HTTP + interfaz gráfica embebida (static/)
 internal/jsonout/    JSON con orden de columnas conservado
 scripts/             verificación (mdbtools, PHP)
 testdb/              bases de prueba locales (Northwind); NO se versiona
